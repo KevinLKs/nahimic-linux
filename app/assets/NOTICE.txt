@@ -1,0 +1,3 @@
+Original Nahimic interface artwork.
+Copyright belongs to A-Volute / SteelSeries. These assets are not covered by the community code MIT license.
+Source: Nahimic3 1.10.5.0, Theme/images, supplied with the OEM installation package.

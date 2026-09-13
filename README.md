@@ -2,6 +2,12 @@
 
 让笔记本扬声器在 Linux 上用上 Nahimic 音效。提供音乐、电影、游戏、通话四种模式，低音、人声、高音、环绕、动态压缩和十段均衡器。支持一键开关对比，音量与系统同步，设置自动保存，关闭面板后音效继续运行。
 
+这是独立的社区项目，与 Nahimic、A-Volute、SteelSeries 及电脑厂商无隶属关系，也未获其认可或赞助。名称、商标和原厂资源归各自权利人所有。
+
+*An independent community project, not affiliated with, endorsed by, or sponsored by Nahimic, A-Volute, SteelSeries, or PC manufacturers.*
+
+![Nahimic Linux 控制面板](docs/panel.png)
+
 ## 安装
 
 Arch Linux 及衍生发行版：
@@ -24,7 +30,11 @@ yay -S nahimic-linux
 
 ## 使用与排查
 
-面板顶部的开关可即时切换音效与原声。开机启动可在面板里调整。
+面板顶部的开关可即时切换音效与原声。点击「均衡器」打开十段调节窗口；在「设置」中调整开机启动和界面语言。窗口支持拖动标题栏、双击最大化及拖动边缘缩放。
+
+界面支持简体中文、繁体中文、英语、日语、韩语、德语、法语、西班牙语、葡萄牙语、意大利语、俄语和土耳其语。默认跟随系统语言，也可手动选择；切换立即生效并自动保存，不影响正在播放的音效。不支持的系统语言使用英语。
+
+翻译文件位于 `app/locales/`。欢迎修正用词或贡献新语言，新增翻译须包含现有全部条目和格式占位符，并检查长文本在最小窗口下的显示。
 
 ```sh
 nahimic --status

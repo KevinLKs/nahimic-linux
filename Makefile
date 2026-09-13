@@ -15,6 +15,10 @@ bin/pulse_state: host/pulse_state.c host/volume_state.h | bin
 install: all
 	install -d $(DESTDIR)$(PREFIX)/lib/nahimic-linux/{app,host,bin}
 	install -m644 app/*.py app/*.svg $(DESTDIR)$(PREFIX)/lib/nahimic-linux/app/
+	install -d $(DESTDIR)$(PREFIX)/lib/nahimic-linux/app/assets
+	install -m644 app/assets/* $(DESTDIR)$(PREFIX)/lib/nahimic-linux/app/assets/
+	install -d $(DESTDIR)$(PREFIX)/lib/nahimic-linux/app/locales
+	install -m644 app/locales/*.json $(DESTDIR)$(PREFIX)/lib/nahimic-linux/app/locales/
 	install -m644 host/*.py $(DESTDIR)$(PREFIX)/lib/nahimic-linux/host/
 	install -m755 bin/* $(DESTDIR)$(PREFIX)/lib/nahimic-linux/bin/
 	install -Dm755 packaging/nahimic $(DESTDIR)$(PREFIX)/bin/nahimic
