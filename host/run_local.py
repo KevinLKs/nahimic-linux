@@ -14,9 +14,9 @@ from prepare_settings import prepare
 
 def wine_path(path):
     return 'Z:' + str(path).replace('/', '\\')
-from desktop_audio import DesktopAudio
+from desktop_audio import DesktopAudio, OutputUnavailable, supported_speaker
 
-def linked_channels(listing, sink, target, monitor=None):
+def linked_channels(listing, sink, target, monitor=None, render=True):
     """Require both directed stereo connections, including port identities."""
     edges = set()
     source = None
@@ -26,7 +26,8 @@ def linked_channels(listing, sink, target, monitor=None):
         elif source and line.strip().startswith('|-> '):
             edges.add((source, line.strip()[4:]))
     expected = {(f'{monitor or sink}:monitor_{ch}', f'{sink}_capture:input_{ch}') for ch in ('FL', 'FR')}
-    expected |= {(f'{sink}_render:output_{ch}', f'{target}:playback_{ch}') for ch in ('FL', 'FR')}
+    if render:
+        expected |= {(f'{sink}_render:output_{ch}', f'{target}:playback_{ch}') for ch in ('FL', 'FR')}
     return expected <= edges
 
 def main():
@@ -59,9 +60,9 @@ def main():
     sinks = json.loads(subprocess.run(['pactl', '--format=json', 'list', 'sinks'], check=True, capture_output=True, text=True, timeout=10).stdout)
     matches = [s for s in sinks if s['name'] == args.target]
     if len(matches) != 1:
-        raise RuntimeError('The selected physical output is absent or ambiguous')
+        raise OutputUnavailable('The configured speaker output is unavailable')
     target = matches[0]
-    if 'HDA:14f11f87,1d05e022,' not in target.get('properties', {}).get('alsa.components', '') or target.get('active_port') != '[Out] Speaker':
+    if not supported_speaker(target):
         raise RuntimeError('This launcher currently verifies only the original 1D05E022 speaker endpoint')
     dll_sha256 = hashlib.sha256(dll.read_bytes()).hexdigest()
     if args.reuse_session:
@@ -155,22 +156,30 @@ def main():
             time.sleep(0.05)
         state['settings_initialized'] = True
         save()
-        gateway_properties = "device.description='Nahimic Speakers' node.virtual=true priority.session=0"
+        gateway_properties = (f"device.description='Nahimic Speakers' device.class=filter node.virtual=true "
+                              f"priority.session=0 node.link-group={sink} filter.smart=true "
+                              f"filter.smart.name={sink} filter.smart.disabled=true "
+                              "filter.smart.target=" + json.dumps(json.dumps({"node.name": args.target})))
         if args.state_dir:
             gateway_properties += ' monitor.channel-volumes=false'
-        created = subprocess.run(['pactl', 'load-module', 'module-null-sink', f'sink_name={sink}', 'format=float32le', 'rate=48000', 'channels=2', 'channel_map=front-left,front-right', f'sink_properties="{gateway_properties}"'], check=True, capture_output=True, text=True, timeout=10)
+        else:
+            gateway_properties = "device.description='Nahimic Speakers' node.virtual=true priority.session=0"
+        created = subprocess.run(['pactl', 'load-module', 'module-null-sink', f'sink_name={sink}', 'format=float32le', 'rate=48000', 'channels=2', 'channel_map=front-left,front-right', f'sink_properties={json.dumps(gateway_properties)}'], check=True, capture_output=True, text=True, timeout=10)
         module = int(created.stdout.strip())
         state['module'] = module
         capture_sink = sink
         common = ['pw-cat', '--raw', '--format', 'f32', '--rate', '48000', '--channels', '2', '--channel-map', 'FL,FR', '--latency', '1024']
-        render = start('render', ['pacat', '--playback', '--raw', '--format=float32le', '--rate=48000', '--channels=2', '--channel-map=front-left,front-right', '--latency-msec=80', '--process-time-msec=10', '--device', args.target, '--client-name=Nahimic playback', f'--property=node.name={sink}_render', '--property=node.dont-reconnect=true'], stdin=host.stdout, stdout=subprocess.DEVNULL)
+        render = start('render', ['pacat', '--playback', '--raw', '--format=float32le', '--rate=48000', '--channels=2', '--channel-map=front-left,front-right', '--latency-msec=80', '--process-time-msec=10', '--device', args.target, '--client-name=Nahimic playback', f'--property=node.name={sink}_render', f'--property=node.link-group={sink}', '--property=node.linger=true', '--property=node.dont-fallback=true'], stdin=host.stdout, stdout=subprocess.DEVNULL)
         host.stdout.close()
         capture = start('capture', common + ['--record', '--target', capture_sink, '--properties', f'{{ node.name = {sink}_capture stream.capture.sink = true node.dont-reconnect = true }}', '-'], stdin=subprocess.DEVNULL, stdout=host.stdin)
         host.stdin.close()
+        if args.state_dir:
+            desktop = DesktopAudio(work, sink, args.target)
         deadline = time.monotonic() + 10
         while True:
+            initialized = desktop is None or desktop.tick(initializing=True)
             listing = subprocess.run(['pw-link', '-l'], check=True, capture_output=True, text=True, timeout=5).stdout
-            if linked_channels(listing, sink, args.target, capture_sink):
+            if initialized and linked_channels(listing, sink, args.target, capture_sink, render=desktop is None or desktop.enabled):
                 state['links_at_start'] = listing
                 break
             if time.monotonic() > deadline:
@@ -180,9 +189,6 @@ def main():
                     raise RuntimeError(f'{name} exited before audio links were ready')
             time.sleep(0.1)
         state['ready'] = True
-        if args.state_dir:
-            desktop = DesktopAudio(work, sink, args.target)
-            desktop.tick()
         save()
         selection = 'saved settings' if args.reuse_session else profile_name
         print(f'Ready: {sink} -> original {selection} chain -> {args.target}', flush=True)
@@ -194,14 +200,14 @@ def main():
                 if child.poll() is not None:
                     raise RuntimeError(f'{name} exited unexpectedly with {child.returncode}')
             time.sleep(0.2)
-        capture.terminate()
-        capture.wait(timeout=5)
-        for name, child in (('host', host), ('render', render)):
-            code = child.wait(timeout=15)
-            if code:
-                raise RuntimeError(f'{name} did not stop cleanly: {code}')
         success = True
         return 0
+    except RuntimeError:
+        current_sinks = json.loads(subprocess.run(['pactl', '--format=json', 'list', 'sinks'], check=True, capture_output=True, text=True, timeout=5).stdout)
+        if not any(s['name'] == args.target and supported_speaker(s) for s in current_sinks):
+            success = True
+            raise OutputUnavailable('Waiting for the configured built-in speakers') from None
+        raise
     finally:
         state['ready'] = False
         save()
@@ -236,4 +242,8 @@ def main():
         if cleanup_error:
             raise RuntimeError(cleanup_error)
 if __name__ == '__main__':
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except OutputUnavailable as error:
+        print(str(error), flush=True)
+        raise SystemExit(75)

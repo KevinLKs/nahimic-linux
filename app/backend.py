@@ -85,6 +85,9 @@ class Backend:
         auto = subprocess.run(["systemctl", "--user", "is-enabled", "nahimic.service"],
                               capture_output=True, text=True, timeout=5).returncode == 0
         result = {"ready": False, "service": service, "autostart": auto}
+        status_path = RUNTIME / "desktop-state.json"
+        if service == "active" and status_path.exists():
+            result["waiting_for_speakers"] = json.loads(status_path.read_text()).get("waiting_for_speakers", False)
         path = RUNTIME / "session.json"
         if path.exists():
             session = json.loads(path.read_text())

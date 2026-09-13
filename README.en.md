@@ -20,7 +20,7 @@ yay -S nahimic-linux
 
 Alternatively, use `paru -S nahimic-linux`. Installation downloads the required runtime components, identifies supported speakers, and starts the audio service. Open **Nahimic** from your application menu or run `nahimic`. Initial runtime setup may take a moment.
 
-Currently tested on the built-in speakers of the **MECHREVO Wujie 14X Pro (机械革命无界 14X Pro)** with Senary audio, subsystem ID `1D05E022`. Requires x86_64 Linux, PipeWire, PipeWire Pulse, and a systemd user session. The Qt interface works with KDE, GNOME, and other desktop environments that provide these components. Headphones, Bluetooth devices, and other outputs retain their existing system audio paths.
+Currently tested on the built-in speakers of the **MECHREVO Wujie 14X Pro (机械革命无界 14X Pro)** with Senary audio, subsystem ID `1D05E022`. Requires x86_64 Linux, PipeWire, PipeWire Pulse, WirePlumber 0.5 or newer, and a systemd user session. The Qt interface works with KDE, GNOME, and other desktop environments that provide these components. Effects attach automatically to the built-in speakers while you select real output devices as usual. Headphones, Bluetooth devices, and HDMI outputs use their own audio paths. Effects resume automatically when the speakers return.
 
 ## Recommended: let an AI assistant install or adapt it
 
@@ -46,11 +46,11 @@ systemctl --user status nahimic.service
 journalctl --user -u nahimic.service -b
 ```
 
-After switching back to the built-in speakers, run `systemctl --user restart nahimic.service` if the audio service needs to reconnect. Settings are stored in `${XDG_DATA_HOME:-~/.local/share}/nahimic-linux/`.
+The effects switch applies only to the built-in speakers. Your system manages the default output and each application’s device selection. Settings are stored in `${XDG_DATA_HOME:-~/.local/share}/nahimic-linux/`.
 
 ## Build and install from source
 
-The AUR build recipe is in [packaging/PKGBUILD](packaging/PKGBUILD). Build dependencies include MinGW-w64 GCC, a C compiler, pkg-config, libpulse, Python, and cabextract. Runtime dependencies include Wine, PySide6, PipeWire, PipeWire Pulse, libpulse, and systemd. The PKGBUILD contains the complete package dependency lists.
+The AUR build recipe is in [packaging/PKGBUILD](packaging/PKGBUILD). Build dependencies include MinGW-w64 GCC, a C compiler, pkg-config, libpulse, Python, and cabextract. Runtime dependencies include Wine, PySide6, PipeWire, PipeWire Pulse, WirePlumber 0.5+, libpulse, and systemd. The PKGBUILD contains the complete package dependency lists.
 
 ```sh
 git clone https://aur.archlinux.org/nahimic-linux.git

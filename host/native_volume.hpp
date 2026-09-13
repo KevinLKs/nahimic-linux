@@ -3,11 +3,12 @@
 #include <atomic>
 #include "volume_state.h"
 
-static_assert(sizeof(apo_volume_state)==296,"volume ABI");
+static_assert(sizeof(apo_volume_state)==296,"volume payload ABI");
+static_assert(sizeof(apo_volume_shared)==600,"volume mapping ABI");
 
 class NativeVolumeState {
     HANDLE file_=INVALID_HANDLE_VALUE,mapping_=nullptr;
-    const apo_volume_state* mapped_=nullptr;
+    const apo_volume_shared* mapped_=nullptr;
     std::string target_;
     std::atomic<bool> failed_{false};
     apo_volume_state previous_{};
@@ -26,25 +27,17 @@ public:
         file_=CreateFileW(path,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,nullptr,OPEN_EXISTING,0,nullptr);
         if(file_==INVALID_HANDLE_VALUE)return false;
         LARGE_INTEGER size{};
-        if(!GetFileSizeEx(file_,&size) || size.QuadPart!=sizeof(apo_volume_state))return false;
+        if(!GetFileSizeEx(file_,&size) || size.QuadPart!=sizeof(apo_volume_shared))return false;
         mapping_=CreateFileMappingW(file_,nullptr,PAGE_READONLY,0,0,nullptr);
         if(!mapping_)return false;
-        mapped_=static_cast<const apo_volume_state*>(MapViewOfFile(mapping_,FILE_MAP_READ,0,0,sizeof(apo_volume_state)));
+        mapped_=static_cast<const apo_volume_shared*>(MapViewOfFile(mapping_,FILE_MAP_READ,0,0,sizeof(apo_volume_shared)));
         if(!mapped_)return false;
         apo_volume_state state{};return SUCCEEDED(read(state));
     }
     HRESULT read(apo_volume_state& state){
         if(failed())return E_FAIL;
         if(!mapped_)return fail("state mapping absent");
-        bool coherent=false;
-        auto sequence=reinterpret_cast<const volatile uint32_t*>(&mapped_->sequence);
-        for(unsigned attempt=0;attempt<8;++attempt){
-            uint32_t before=*sequence;MemoryBarrier();
-            if(before&1)continue;
-            std::memcpy(&state,mapped_,sizeof(state));MemoryBarrier();
-            if(before==*sequence){coherent=true;break;}
-        }
-        if(!coherent)return fail("incoherent state snapshot");
+        if(!apo_volume_snapshot(mapped_, &state))return fail("incoherent state snapshot");
         FILETIME now;GetSystemTimeAsFileTime(&now);
         uint64_t ticks=(uint64_t(now.dwHighDateTime)<<32)|now.dwLowDateTime;
         if(state.magic!=APO_VOLUME_MAGIC || !state.valid || state.channels!=2 || state.muted>1 ||

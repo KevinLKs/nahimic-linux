@@ -311,7 +311,7 @@ class Panel(QMainWindow):
         self.auto.clicked.connect(lambda checked: self.submit(lambda: self.backend.autostart(checked), 'state', 'autostart', checked)); preferences_layout.addWidget(self.auto)
         note = QLabel('关闭窗口后，音效继续运行。模式和参数会自动保存。'); note.setObjectName('muted'); note.setWordWrap(True); preferences_layout.addWidget(note)
         about = QLabel('关于'); about.setObjectName('effectTitle'); preferences_layout.addWidget(about)
-        version = QLabel('Nahimic Linux  0.2.0'); version.setObjectName('caption'); preferences_layout.addWidget(version)
+        version = QLabel('Nahimic Linux  0.3.0'); version.setObjectName('caption'); preferences_layout.addWidget(version)
         disclaimer = QLabel('这是独立的社区项目，与 Nahimic、A-Volute、SteelSeries 及电脑厂商无隶属关系，也未获其认可或赞助。相关名称、商标和原厂资源归各自权利人所有。')
         disclaimer.setWordWrap(True); disclaimer.setObjectName('muted'); disclaimer.setMaximumWidth(460); preferences_layout.addWidget(disclaimer)
         close_button = QPushButton('完成'); close_button.clicked.connect(self.preferences.accept); preferences_layout.addWidget(close_button,0,Qt.AlignRight)
@@ -403,7 +403,9 @@ class Panel(QMainWindow):
             result = self.last_status
             if result['ready']:
                 self.translations.bind(self.status, 'text', '音效正在运行' if result['active'] else
-                    '正在播放原声' if not result['enabled'] else '音效已开启，请选择 Nahimic Speakers 输出')
+                    '正在播放原声' if not result['enabled'] else '音效已开启，等待扬声器播放')
+            elif result.get('waiting_for_speakers'):
+                self.translations.bind(self.status, 'text', '等待内置扬声器，其他输出正常使用')
             else:
                 self.translations.bind(self.status, 'text', '正在准备音效，请稍候…' if
                     result['service'] in ('active', 'activating') else '音效服务未运行，请关闭并重新打开软件。')

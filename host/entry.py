@@ -2,11 +2,12 @@
 import argparse
 import json
 import os
+import signal
 from pathlib import Path
 import subprocess
 import sys
 import time
-from desktop_audio import atomic_json, pulse
+from desktop_audio import atomic_json, pulse, supported_speaker
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")) / "nahimic-linux"
@@ -17,9 +18,7 @@ MARKER = "nahimic-linux-v1\n"
 
 def detect():
     sinks = json.loads(pulse("--format=json", "list", "sinks"))
-    matches = [s for s in sinks
-               if "hda:14f11f87,1d05e022," in s.get("properties", {}).get("alsa.components", "").lower()
-               and s.get("active_port") == "[Out] Speaker"]
+    matches = [s for s in sinks if supported_speaker(s)]
     if len(matches) != 1:
         raise RuntimeError("未找到受支持的内置扬声器（1D05E022）。请选择扬声器输出后重试。")
     return matches[0]["name"]
@@ -43,7 +42,7 @@ def initialize():
     marker(RUNTIME / "prefix/.nahimic-linux-owner")
     if not (RUNTIME / "preferences.json").exists():
         atomic_json(RUNTIME / "preferences.json", {"enabled": True})
-    atomic_json(DATA / "installation.json", {"version": "0.1.0", "target": target})
+    atomic_json(DATA / "installation.json", {"version": "0.3.0", "target": target})
     return target
 
 
@@ -82,6 +81,50 @@ def activate():
         systemctl("restart", "nahimic.service")
 
 
+def serve():
+    installation = DATA / "installation.json"
+    target = json.loads(installation.read_text())["target"] if installation.exists() else initialize()
+    session_path = RUNTIME / "session.json"
+    if session_path.exists():
+        session = json.loads(session_path.read_text())
+        session["ready"] = False
+        atomic_json(session_path, session)
+    stopped = False
+    child = None
+
+    def stop(signum, frame):
+        nonlocal stopped
+        stopped = True
+        if child is not None and child.poll() is None:
+            child.terminate()
+
+    signal.signal(signal.SIGTERM, stop)
+    signal.signal(signal.SIGINT, stop)
+    while not stopped:
+        print("Waiting for configured speakers:", target, flush=True)
+        atomic_json(RUNTIME / "desktop-state.json", {"waiting_for_speakers": True})
+        while not stopped:
+            sinks = json.loads(pulse("--format=json", "list", "sinks"))
+            if any(s["name"] == target and supported_speaker(s) for s in sinks):
+                break
+            time.sleep(0.5)
+        if stopped:
+            return
+        atomic_json(RUNTIME / "desktop-state.json", {"waiting_for_speakers": False})
+        child = subprocess.Popen([sys.executable, str(ROOT / "host/run_local.py"),
+                 "--exe", str(ROOT / "bin/apo_probe.exe"),
+                 "--dll", str(SHARE / "vendor/NahimicAPO4.dll"),
+                 "--settings", str(SHARE / "factory"), "--target", target,
+                 "--state-dir", str(RUNTIME)])
+        if stopped:
+            child.terminate()
+        code = child.wait()
+        if stopped:
+            return
+        if code != 75:
+            raise SystemExit(code)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Nahimic speaker effects")
     modes = parser.add_mutually_exclusive_group()
@@ -93,12 +136,7 @@ def main():
         from backend import Backend
         print(json.dumps(Backend().status(), ensure_ascii=False, indent=2))
     elif args.service:
-        target = initialize()
-        os.execv(sys.executable, [sys.executable, str(ROOT / "host/run_local.py"),
-                 "--exe", str(ROOT / "bin/apo_probe.exe"),
-                 "--dll", str(SHARE / "vendor/NahimicAPO4.dll"),
-                 "--settings", str(SHARE / "factory"), "--target", target,
-                 "--state-dir", str(RUNTIME)])
+        serve()
     elif args.activate:
         activate()
     elif args.autostart:

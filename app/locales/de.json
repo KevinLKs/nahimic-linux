@@ -39,7 +39,7 @@
   "音效已关闭": "Effekte aus",
   "音效正在运行": "Effekte sind aktiv",
   "正在播放原声": "Originalton wird wiedergegeben",
-  "音效已开启，请选择 Nahimic Speakers 输出": "Effekte sind an. Ausgabe Nahimic Speakers auswählen.",
+  "音效已开启，等待扬声器播放": "Effekte aktiviert. Warte auf Lautsprecherwiedergabe.",
   "等待连接": "Warte auf Verbindung",
   "正在准备音效，请稍候…": "Effekte werden vorbereitet…",
   "音效服务未运行，请关闭并重新打开软件。": "Der Audiodienst läuft nicht. Starten Sie die App erneut.",
@@ -55,5 +55,6 @@
   "Minimize": "Minimieren",
   "Maximize": "Maximieren / Wiederherstellen",
   "Close": "Schließen",
-  "设置未获系统确认，已重新读取当前状态。": "Das System hat die Änderung nicht bestätigt. Der aktuelle Status wurde neu geladen."
+  "设置未获系统确认，已重新读取当前状态。": "Das System hat die Änderung nicht bestätigt. Der aktuelle Status wurde neu geladen.",
+  "等待内置扬声器，其他输出正常使用": "Warte auf integrierte Lautsprecher. Andere Ausgänge bleiben verfügbar."
 }

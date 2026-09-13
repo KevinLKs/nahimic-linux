@@ -20,7 +20,7 @@ yay -S nahimic-linux
 
 也可以使用 `paru -S nahimic-linux`。安装会自动下载所需运行组件、匹配扬声器并启动音效。安装完成后，从应用菜单打开 **Nahimic 音效**，或运行 `nahimic`。首次准备运行环境需要稍等片刻。
 
-目前已验证机械革命无界 14X Pro（Senary 声卡，子系统 ID `1D05E022`）的内置扬声器。需要 x86_64、PipeWire、PipeWire Pulse 和 systemd 用户会话。界面使用 Qt，支持 KDE、GNOME 及其他提供上述组件的桌面环境。耳机、蓝牙和其他输出设备继续使用系统原有音频路径。
+目前已验证机械革命无界 14X Pro（Senary 声卡，子系统 ID `1D05E022`）的内置扬声器。需要 x86_64、PipeWire、PipeWire Pulse、WirePlumber 0.5 或更新版本，以及 systemd 用户会话。界面使用 Qt，支持 KDE、GNOME 及其他提供上述组件的桌面环境。音效自动附着于内置扬声器，系统中照常选择真实输出设备。切换到耳机、蓝牙或 HDMI 时使用对应设备的原有音频路径；切回扬声器后自动恢复音效。
 
 ## 让 AI 帮你安装或适配
 
@@ -44,11 +44,11 @@ systemctl --user status nahimic.service
 journalctl --user -u nahimic.service -b
 ```
 
-切回内置扬声器后，可用 `systemctl --user restart nahimic.service` 重新连接。设置保存在 `${XDG_DATA_HOME:-~/.local/share}/nahimic-linux/`。
+音效开关只控制内置扬声器；系统默认输出和应用单独选择的设备由系统管理。设置保存在 `${XDG_DATA_HOME:-~/.local/share}/nahimic-linux/`。
 
 ## 构建与安装
 
-AUR 的 `PKGBUILD` 位于 `packaging/`。构建依赖 MinGW-w64 GCC、C 编译器、pkg-config、libpulse、Python 和 cabextract。运行依赖 Wine、PySide6、PipeWire、PipeWire Pulse、libpulse、systemd。
+AUR 的 `PKGBUILD` 位于 `packaging/`。构建依赖 MinGW-w64 GCC、C 编译器、pkg-config、libpulse、Python 和 cabextract。运行依赖 Wine、PySide6、PipeWire、PipeWire Pulse、WirePlumber 0.5+、libpulse、systemd。
 
 ```sh
 git clone https://aur.archlinux.org/nahimic-linux.git

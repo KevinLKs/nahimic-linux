@@ -12,9 +12,11 @@
 #include <stdlib.h>
 #include "volume_state.h"
 
-_Static_assert(sizeof(struct apo_volume_state)==296,"volume ABI");
+_Static_assert(sizeof(struct apo_volume_state)==296,"volume payload ABI");
+_Static_assert(sizeof(struct apo_volume_shared)==600,"volume mapping ABI");
 static pa_mainloop *loop;
-static struct apo_volume_state *shared, current;
+static struct apo_volume_shared *shared;
+static struct apo_volume_state current;
 static const char *target;
 static uint32_t sink_index=PA_INVALID_INDEX;
 static int failed, ready;
@@ -24,10 +26,7 @@ static void publish(void) {
     struct timespec now;
     clock_gettime(CLOCK_REALTIME,&now);
     current.timestamp_100ns=116444736000000000ULL+(uint64_t)now.tv_sec*10000000ULL+now.tv_nsec/100;
-    uint32_t seq=__atomic_load_n(&shared->sequence,__ATOMIC_RELAXED);
-    __atomic_store_n(&shared->sequence,seq+1,__ATOMIC_SEQ_CST);
-    memcpy((char*)shared+4,(char*)&current+4,sizeof(current)-4);
-    __atomic_store_n(&shared->sequence,seq+2,__ATOMIC_RELEASE);
+    apo_volume_publish(shared, &current);
 }
 
 static void fail(const char *message) {
@@ -107,8 +106,8 @@ int main(int argc,char **argv) {
     target=argv[1];strcpy(current.target,target);current.magic=APO_VOLUME_MAGIC;
     int fd=open(argv[2],O_CREAT|O_EXCL|O_RDWR,0600);
     if(fd<0){perror("state file");return 1;}
-    if(ftruncate(fd,sizeof(current))){perror("state size");close(fd);return 1;}
-    shared=mmap(NULL,sizeof(current),PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);close(fd);
+    if(ftruncate(fd,sizeof(*shared))){perror("state size");close(fd);return 1;}
+    shared=mmap(NULL,sizeof(*shared),PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);close(fd);
     if(shared==MAP_FAILED){perror("state mapping");return 1;}
     loop=pa_mainloop_new();pa_mainloop_api *api=pa_mainloop_get_api(loop);
     pa_context *context=pa_context_new(api,"Nahimic native endpoint state");
@@ -123,5 +122,5 @@ int main(int argc,char **argv) {
     current.valid=0;publish();
     api->time_free(timer);pa_context_set_state_callback(context,NULL,NULL);
     pa_context_disconnect(context);pa_context_unref(context);pa_mainloop_free(loop);
-    munmap(shared,sizeof(current));return failed?1:result;
+    munmap(shared,sizeof(*shared));return failed?1:result;
 }
