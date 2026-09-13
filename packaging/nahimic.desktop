@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Nahimic
+Name[zh_CN]=Nahimic 音效
+Comment=Speaker effects and equalizer
+Comment[zh_CN]=扬声器音效与均衡器
+Exec=nahimic
+Icon=nahimic
+Terminal=false
+Categories=AudioVideo;Audio;Settings;
+StartupNotify=true

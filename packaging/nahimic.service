@@ -1,0 +1,18 @@
+[Unit]
+Description=Nahimic speaker effects
+Wants=pipewire.service pipewire-pulse.service
+After=pipewire.service pipewire-pulse.service
+StartLimitIntervalSec=120
+StartLimitBurst=3
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/nahimic --service
+Restart=on-failure
+RestartSec=5
+KillMode=mixed
+TimeoutStopSec=30
+UMask=0077
+
+[Install]
+WantedBy=default.target

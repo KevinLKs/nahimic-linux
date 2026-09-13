@@ -1,0 +1,20 @@
+{
+  "vendor/NahimicAPO3ConfiguratorDaemonModule.dll": "d3d56f88acfd115885120285468c8ad698298106fcf9fa0bb72c802f5f8ff48d",
+  "vendor/NahimicAPO4.dll": "4ab3572392a79a1fa530436eec073c0fb4b9a8670bfaf9a5012d7f83afe0b0d2",
+  "vendor/NahimicAPO4API.dll": "ea95c063f0cce8a2fb7ba50e57aa0032cb96c2f4505d841653b2f5dc5e2b94e5",
+  "vendor/NahimicAPO4ConfiguratorDaemonModule.dll": "7993610684cae64b05be3927f1c64010431c233d5b2e2fa628b68c1e6acd343b",
+  "vendor/NahimicAPO4ExpertAPI.dll": "0fa711888e32ea682986a12fd3dd417db42a0fb6f6f9157563527652d0a710f4",
+  "vendor/NahimicAPO4VolumeDaemonModule.dll": "26210d1cc8a4cca23b8504f04ddf346af4b06bccb980ccf018a8fc4b0793f569",
+  "vendor/NahimicPnPAPO4ConfiguratorDaemonModule.dll": "1e4c46eea574166bc7ba7192166fb681f36d721d2040dab18951f1963980dfe9",
+  "vendor/NahimicSharedMemory.dll": "6dd53e18069385aac494b34a5efe145b63e3c39d77d7dff40bb40a10e8d65b1b",
+  "vendor/NhNotifSys.dll": "dcbb34bb780e5428c5ca095d724c5aa9502c11e8dca96749dc57923a3d939f6b",
+  "vendor/NhNotifSysApp.resources.zh-hans.dll": "3446984e35fe7408c25cac1b123d16d56823c9137d034704717be2ab3ac4dfb1",
+  "vendor/NhNotifSysApp.resources.zh-hant.dll": "e058e09d6e99416addc414d41db8a66265a52a9ffe596e3cc5b84f9715610530",
+  "factory/Global.nsx": "72cc2824e0fa4e61e652b9e2d5a86ebc7b862450e514ebade78e473b2c7abe10",
+  "factory/Metadata.nsx": "28e0635deaaf0fc0e5ef81978a6e4f208cf8f8c449a7b78d8ca3bd430660144d",
+  "factory/Devices/1D05E022_Speakers.nsx": "d6db544826b0f227a320ab4308f0b69f5e6c0d4406e5b6564e5cea35097aa9f2",
+  "factory/AudioProfiles/Music.nsx": "8fdbe2ea702880d5e807a18fd0c879383aa18aa47aebd40589a20d46b079c4db",
+  "factory/AudioProfiles/Movie.nsx": "979250993a61ebaabd545e5b52703fe9ca5d41f3d895d7d5b9bbcc75981e46d4",
+  "factory/AudioProfiles/Gaming.nsx": "058d1f10358bb1287aa825d462dcdf06ba260f7e0bcd398628a0fceb6832ad3f",
+  "factory/AudioProfiles/Communication.nsx": "438031aabd60aaee4bc4ddfb50863743f1ee5d14514b4bf32e6facd3aab52dc0"
+}

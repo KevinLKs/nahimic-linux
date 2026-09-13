@@ -1,0 +1,107 @@
+#pragma once
+#include <windows.h>
+#include <oleauto.h>
+
+struct FltArray { SAFEARRAY* data; LONG count; };
+struct FltCoupleArray { SAFEARRAY* data; LONG count; };
+struct BShortStringArray { SAFEARRAY* data; LONG count; };
+struct ByteSafeArray { SAFEARRAY* data; LONG count; };
+static_assert(sizeof(FltArray)==16 && offsetof(FltArray,count)==8);
+static_assert(sizeof(FltCoupleArray)==16 && sizeof(BShortStringArray)==16 && sizeof(ByteSafeArray)==16);
+struct ControlSetting : IDispatch {
+    virtual HRESULT STDMETHODCALLTYPE GetSetting(LONG*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetType(LONG*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetState(VARIANT_BOOL*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetClass(LONG*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetDevice(LONG*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetSource(LONG*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetName(BSTR*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetBoolTraits(VARIANT_BOOL*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetLongTraits(LONG*,LONG*,LONG*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetFloatTraits(float*,float*,float*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetBoolSetting(VARIANT_BOOL*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetLongSetting(LONG*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetFloatSetting(float*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetStringSetting(BSTR*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetFltArraySetting(FltArray*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetFltCoupleArraySetting(FltCoupleArray*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetStringArraySetting(BShortStringArray*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetByteArraySetting(ByteSafeArray*)=0;
+    virtual HRESULT STDMETHODCALLTYPE SetBoolSetting(VARIANT_BOOL)=0;
+    virtual HRESULT STDMETHODCALLTYPE SetLongSetting(LONG)=0;
+    virtual HRESULT STDMETHODCALLTYPE SetFloatSetting(float)=0;
+    virtual HRESULT STDMETHODCALLTYPE SetStringSetting(BSTR)=0;
+    virtual HRESULT STDMETHODCALLTYPE SetFltArraySetting(FltArray)=0;
+    virtual HRESULT STDMETHODCALLTYPE SetFltCoupleArraySetting(FltCoupleArray)=0;
+    virtual HRESULT STDMETHODCALLTYPE SetStringArraySetting(BShortStringArray)=0;
+    virtual HRESULT STDMETHODCALLTYPE SetByteArraySetting(ByteSafeArray)=0;
+};
+struct ControlStore : IDispatch {
+    virtual HRESULT STDMETHODCALLTYPE GetSettingCount(LONG*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetSetting(LONG,ControlSetting**)=0;
+    virtual HRESULT STDMETHODCALLTYPE OpenSetting(LONG,ControlSetting**)=0;
+    virtual HRESULT STDMETHODCALLTYPE CanBeModified(VARIANT_BOOL*)=0;
+};
+struct ControlProfile : IDispatch {
+    virtual HRESULT STDMETHODCALLTYPE GetId(GUID*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetName(BSTR*)=0;
+    virtual HRESULT STDMETHODCALLTYPE SetName(BSTR)=0;
+    virtual HRESULT STDMETHODCALLTYPE OpenStore(ControlStore**)=0;
+    virtual HRESULT STDMETHODCALLTYPE CanBeDeleted(VARIANT_BOOL*)=0;
+    virtual HRESULT STDMETHODCALLTYPE CanBeModified(VARIANT_BOOL*)=0;
+    virtual HRESULT STDMETHODCALLTYPE CanBeReset(VARIANT_BOOL*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetEqPresetCount(LONG*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetEqPresetName(LONG,BSTR*)=0;
+    virtual HRESULT STDMETHODCALLTYPE SetCurrentEqPreset(BSTR)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetCurrentEqPreset(BSTR*)=0;
+};
+struct ControlApplication : IDispatch {
+    virtual HRESULT STDMETHODCALLTYPE GetId(GUID*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetExeName(BSTR*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetFullPath(BSTR*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetName(BSTR*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetIconPath(BSTR*)=0;
+    virtual HRESULT STDMETHODCALLTYPE SetIconPath(BSTR)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetProfile(ControlProfile**)=0;
+    virtual HRESULT STDMETHODCALLTYPE SetProfile(ControlProfile*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetStreamCount(LONG*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetVUMeterEnergy(LONG,LONG,float*)=0;
+    virtual HRESULT STDMETHODCALLTYPE OpenStore(ControlStore**)=0;
+};
+struct OriginalControl : IDispatch {
+    virtual HRESULT STDMETHODCALLTYPE GetStreamCount(LONG*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetApplicationCount(LONG*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetApplication(LONG,ControlApplication**)=0;
+    virtual HRESULT STDMETHODCALLTYPE AddApplication(BSTR,ControlApplication**)=0;
+    virtual HRESULT STDMETHODCALLTYPE RemoveApplication(ControlApplication*)=0;
+    virtual HRESULT STDMETHODCALLTYPE OpenApplication(BSTR,ControlApplication**)=0;
+    virtual HRESULT STDMETHODCALLTYPE OpenDefaultApplication(ControlApplication**)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetProfileCount(LONG*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetProfile(LONG,ControlProfile**)=0;
+    virtual HRESULT STDMETHODCALLTYPE AddProfile(BSTR,ControlProfile**)=0;
+    virtual HRESULT STDMETHODCALLTYPE RemoveProfile(ControlProfile*)=0;
+    virtual HRESULT STDMETHODCALLTYPE OpenProfile(GUID,ControlProfile**)=0;
+    virtual HRESULT STDMETHODCALLTYPE OpenDefaultProfile(ControlProfile**)=0;
+    virtual HRESULT STDMETHODCALLTYPE OpenStore(ControlStore**)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetSettingSource(LONG,LONG*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetVUMeterEnergy(LONG,LONG,float*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetNahimicFormFactorOverride(BSTR,LONG*)=0;
+    virtual HRESULT STDMETHODCALLTYPE SetNahimicFormFactorOverride(BSTR,LONG)=0;
+    virtual HRESULT STDMETHODCALLTYPE RegisterNotificationClient(IUnknown**)=0;
+    virtual HRESULT STDMETHODCALLTYPE UnregisterNotificationClient(IUnknown**)=0;
+    virtual HRESULT STDMETHODCALLTYPE OpenApplicationById(GUID,ControlApplication**)=0;
+    virtual HRESULT STDMETHODCALLTYPE DuplicateProfile(GUID,ControlProfile**)=0;
+    virtual HRESULT STDMETHODCALLTYPE OpenEqPresetStore(BSTR,IDispatch**)=0;
+    virtual HRESULT STDMETHODCALLTYPE AddEqPreset(BSTR)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetCaptureEqPresetCount(LONG*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetCaptureEqPresetName(LONG,BSTR*)=0;
+    virtual HRESULT STDMETHODCALLTYPE SetCurrentCaptureEqPreset(BSTR)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetCurrentCaptureEqPreset(BSTR*)=0;
+    virtual HRESULT STDMETHODCALLTYPE SetUseGlobalProfile(VARIANT_BOOL)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetUseGlobalProfile(VARIANT_BOOL*)=0;
+    virtual HRESULT STDMETHODCALLTYPE AddProfileFromGUID(BSTR,GUID,ControlProfile**)=0;
+    virtual HRESULT STDMETHODCALLTYPE SetGlobalProfile(ControlProfile*)=0;
+    virtual HRESULT STDMETHODCALLTYPE GetGlobalProfile(ControlProfile**)=0;
+    virtual HRESULT STDMETHODCALLTYPE AddApplicationWithId(BSTR,GUID,ControlApplication**)=0;
+    virtual HRESULT STDMETHODCALLTYPE Initialize(BSTR)=0;
+};

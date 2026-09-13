@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Nahimic
+Exec=nahimic --autostart
+Icon=nahimic
+Terminal=false
+NoDisplay=true
