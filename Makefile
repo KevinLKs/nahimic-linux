@@ -11,7 +11,7 @@ bin/apo_probe.exe: host/apo_probe.cpp $(wildcard host/*.hpp) host/volume_state.h
 bin/apo_control.exe: host/apo_control.cpp $(wildcard host/*.hpp) | bin
 	$(CXX_WIN) $(WINFLAGS) $< -loleaut32 -lole32 -luuid -o $@
 bin/pulse_state: host/pulse_state.c host/volume_state.h | bin
-	$(CC) -std=c11 -Wall -Wextra -Werror -O2 $< $$(pkg-config --cflags --libs libpulse) -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) -std=c11 -Wall -Wextra -Werror -O2 $< $$(pkg-config --cflags --libs libpulse) $(LDFLAGS) -o $@
 install: all
 	install -d $(DESTDIR)$(PREFIX)/lib/nahimic-linux/{app,host,bin}
 	install -m644 app/*.py app/*.svg $(DESTDIR)$(PREFIX)/lib/nahimic-linux/app/

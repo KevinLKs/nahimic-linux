@@ -5,8 +5,8 @@ pkgrel=1
 pkgdesc='Nahimic speaker effects and equalizer for supported Linux laptops'
 arch=('x86_64')
 url='https://github.com/wearzdk/nahimic-linux'
-license=('MIT' 'custom:Nahimic')
-depends=('python' 'pyside6' 'wine' 'pipewire' 'pipewire-pulse' 'libpulse' 'systemd')
+license=('MIT' 'LicenseRef-Nahimic')
+depends=('python' 'pyside6' 'wine' 'pipewire' 'pipewire-pulse' 'libpulse' 'systemd' 'hicolor-icon-theme' 'bash' 'glibc')
 makedepends=('mingw-w64-gcc' 'pkgconf' 'cabextract' 'git')
 install=nahimic-linux.install
 options=('!strip' '!debug')
@@ -26,6 +26,7 @@ prepare() {
 }
 build() {
     make -C "$srcdir/$pkgname"
+    strip --strip-unneeded "$srcdir/$pkgname/bin/pulse_state"
 }
 package() {
     make -C "$srcdir/$pkgname" DESTDIR="$pkgdir" install
