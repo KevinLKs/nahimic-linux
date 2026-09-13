@@ -62,6 +62,7 @@ def migrate_local():
     launcher = Path.home() / ".local/bin/nahimic"
     if launcher.is_file() and str(DATA / "current/app/main.py") in launcher.read_text():
         launcher.rename(backup / "nahimic-launcher")
+        launcher.symlink_to("/usr/bin/nahimic")
     desktop = Path.home() / ".local/share/applications/nahimic.desktop"
     if desktop.is_file() and str(DATA / "current") in desktop.read_text():
         desktop.rename(backup / "nahimic.desktop")
