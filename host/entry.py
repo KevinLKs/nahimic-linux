@@ -55,7 +55,7 @@ def migrate_local():
     unit = Path.home() / ".config/systemd/user/nahimic.service"
     if not unit.is_file() or str(DATA / "current/host/run_local.py") not in unit.read_text():
         return
-    systemctl("stop", "nahimic.service")
+    systemctl("disable", "--now", "nahimic.service")
     backup = DATA / ("local-backup-" + str(time.time_ns()))
     backup.mkdir()
     unit.rename(backup / unit.name)
