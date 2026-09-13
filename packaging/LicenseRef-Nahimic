@@ -1,0 +1,15 @@
+Nahimic runtime components
+Copyright (c) A-Volute 2019
+
+The Nahimic audio runtime and device settings are proprietary components
+provided by A-Volute / SteelSeries. Their use is governed by the upstream
+Nahimic End User Licence Agreement:
+
+https://www.nahimic.com/eula/
+
+This notice identifies the upstream terms; the project's MIT license applies
+to the community application and host code, not to these runtime components.
+
+Upstream distribution:
+https://www.catalog.update.microsoft.com/Search.aspx?q=A-Volute%204.14.0.0
+https://nahimic.helprace.com/i751-new-how-to-recover-nahimic-with-one-click/1

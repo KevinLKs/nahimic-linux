@@ -23,5 +23,6 @@ install: all
 	install -Dm644 packaging/nahimic-autostart.desktop $(DESTDIR)/etc/xdg/autostart/nahimic.desktop
 	install -Dm644 app/nahimic.svg $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/nahimic.svg
 	install -Dm644 LICENSE $(DESTDIR)$(PREFIX)/share/licenses/nahimic-linux/LICENSE
+	install -Dm644 packaging/LicenseRef-Nahimic $(DESTDIR)$(PREFIX)/share/licenses/nahimic-linux/LicenseRef-Nahimic
 	install -Dm644 README.md $(DESTDIR)$(PREFIX)/share/doc/nahimic-linux/README.md
 SHELL := /bin/bash
