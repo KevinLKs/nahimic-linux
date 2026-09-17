@@ -7,6 +7,7 @@ from pathlib import Path
 import subprocess
 import sys
 import time
+import devices
 from desktop_audio import atomic_json, pulse, supported_speaker
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,12 +17,30 @@ SHARE = Path("/usr/share/nahimic-linux")
 MARKER = "nahimic-linux-v1\n"
 
 
+def describe(sinks):
+    """Human-readable report of the outputs seen and the hardware the table accepts."""
+    lines = ["Outputs found:"]
+    for sink in sinks:
+        codec, subsystem = devices.components(sink)
+        hardware = f"{codec},{subsystem}" if codec else "not an HDA device"
+        lines.append(f"  {sink['name']}  port={sink.get('active_port')!r}  hardware={hardware}")
+    known, ports = devices.load()
+    lines.append("Supported hardware:")
+    for device in known:
+        lines.append(f"  {device['name']}: {device['codec']},{device.get('subsystem') or '<any>'}")
+    lines.append("Accepted speaker ports: " + ", ".join(repr(p) for p in ports))
+    return "\n".join(lines)
+
+
 def detect():
     sinks = json.loads(pulse("--format=json", "list", "sinks"))
     matches = [s for s in sinks if supported_speaker(s)]
     if len(matches) != 1:
-        raise RuntimeError("No supported built-in speakers were found (see host/devices.json and "
-                           "~/.config/nahimic-linux/devices.json). Select the speaker output and try again.")
+        reason = ("More than one supported speaker output matched" if matches else
+                  "No supported built-in speakers were found")
+        raise RuntimeError(reason + ". Select the built-in speakers as the output, unplug headphones, "
+                           "and add your hardware to ~/.config/nahimic-linux/devices.json if it is missing.\n"
+                           + describe(sinks))
     return matches[0]["name"]
 
 

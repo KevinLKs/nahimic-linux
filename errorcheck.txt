@@ -1,3 +1,15 @@
 pactl --format=json list sinks | python3 -c "import json,sys; [print(repr(s['name']), repr(s.get('active_port')), repr(s['properties'].get('alsa.components'))) for s in json.load(sys.stdin)]"
 
 cat /usr/lib/nahimic-linux/host/devices.json
+
+
+python3 -c "
+import json,subprocess
+for s in json.loads(subprocess.run(['pactl','--format=json','list','sinks'],capture_output=True,text=True).stdout):
+    print(s['name'], '|', repr(s.get('active_port')), '|', repr(s['properties'].get('alsa.components')))
+"
+
+
+or
+
+pactl --format=json list sinks | python3 -c "import json,sys; [print(s['name'],'|',repr(s.get('active_port')),'|',repr(s['properties'].get('alsa.components'))) for s in json.load(sys.stdin)]"
