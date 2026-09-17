@@ -32,6 +32,45 @@ def linked_channels(listing, sink, target, monitor=None, render=True):
         expected |= {(f'{sink}_render:output_{ch}', f'{target}:playback_{ch}') for ch in ('FL', 'FR')}
     return expected <= edges
 
+def clear_stale(sink):
+    """Remove leftover render/capture nodes from a previous crashed run.
+
+    The nodes are named after the gateway sink. A stale one makes the stream
+    count ambiguous and the new run then reports a missing playback stream.
+    """
+    names = {sink + '_render', sink + '_capture'}
+    removed = []
+    for listing in ('sink-inputs', 'source-outputs'):
+        try:
+            streams = json.loads(subprocess.run(['pactl', '--format=json', 'list', listing],
+                                                check=True, capture_output=True, text=True, timeout=5).stdout)
+        except (subprocess.SubprocessError, json.JSONDecodeError):
+            continue
+        for stream in streams:
+            properties = stream.get('properties', {})
+            node = properties.get('object.id')
+            if properties.get('node.name') in names and node:
+                result = subprocess.run(['pw-cli', 'destroy', str(node)], capture_output=True, text=True, timeout=5)
+                if result.returncode == 0:
+                    removed.append(f"{properties['node.name']}:{node}")
+    if removed:
+        print('Removed stale audio nodes:', ', '.join(removed), flush=True)
+    return removed
+
+
+def graph_snapshot():
+    """Current links and streams, for diagnosing a failed run."""
+    parts = []
+    for command in (['pw-link', '-l'], ['pactl', 'list', 'short', 'sink-inputs'],
+                    ['pactl', 'list', 'short', 'source-outputs'], ['pactl', 'list', 'short', 'sinks']):
+        try:
+            output = subprocess.run(command, capture_output=True, text=True, timeout=5).stdout
+        except subprocess.SubprocessError as error:
+            output = str(error)
+        parts.append('$ ' + ' '.join(command) + '\n' + output)
+    return '\n'.join(parts)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--exe', type=Path, required=True)
@@ -180,8 +219,9 @@ def main():
         module = int(created.stdout.strip())
         state['module'] = module
         capture_sink = sink
+        state['removed_stale'] = clear_stale(sink)
         common = ['pw-cat', '--raw', '--format', 'f32', '--rate', '48000', '--channels', '2', '--channel-map', 'FL,FR', '--latency', '1024']
-        render = start('render', ['pacat', '--playback', '--raw', '--format=float32le', '--rate=48000', '--channels=2', '--channel-map=front-left,front-right', '--latency-msec=80', '--process-time-msec=10', '--device', args.target, '--client-name=Nahimic playback', f'--property=node.name={sink}_render', f'--property=node.link-group={sink}', '--property=node.linger=true', '--property=node.dont-fallback=true'], stdin=host.stdout, stdout=subprocess.DEVNULL)
+        render = start('render', ['pacat', '--playback', '--raw', '--format=float32le', '--rate=48000', '--channels=2', '--channel-map=front-left,front-right', '--latency-msec=80', '--process-time-msec=10', '--device', args.target, '--client-name=Nahimic playback', f'--property=node.name={sink}_render', f'--property=node.link-group={sink}', '--property=node.dont-fallback=true'], stdin=host.stdout, stdout=subprocess.DEVNULL)
         host.stdout.close()
         capture = start('capture', common + ['--record', '--target', capture_sink, '--properties', f'{{ node.name = {sink}_capture stream.capture.sink = true node.dont-reconnect = true }}', '-'], stdin=subprocess.DEVNULL, stdout=host.stdin)
         host.stdin.close()
@@ -206,15 +246,17 @@ def main():
         print(f'Ready: {sink} -> original {selection} chain -> {args.target}', flush=True)
         started = time.monotonic()
         while not stopping and (args.duration is None or time.monotonic() - started < args.duration):
-            if desktop is not None:
-                desktop.tick()
             for name, child in children.items():
                 if child.poll() is not None:
-                    raise RuntimeError(f'{name} exited unexpectedly with {child.returncode}')
+                    raise RuntimeError(f'{name} exited unexpectedly with {child.returncode}; see '
+                                       f"{work / (name + '.log')}")
+            if desktop is not None:
+                desktop.tick()
             time.sleep(0.2)
         success = True
         return 0
     except RuntimeError:
+        (work / 'failure-graph.txt').write_text(graph_snapshot())
         current_sinks = json.loads(subprocess.run(['pactl', '--format=json', 'list', 'sinks'], check=True, capture_output=True, text=True, timeout=5).stdout)
         if not any(s['name'] == args.target and supported_speaker(s) for s in current_sinks):
             success = True
