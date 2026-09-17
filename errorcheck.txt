@@ -13,3 +13,6 @@ for s in json.loads(subprocess.run(['pactl','--format=json','list','sinks'],capt
 or
 
 pactl --format=json list sinks | python3 -c "import json,sys; [print(s['name'],'|',repr(s.get('active_port')),'|',repr(s['properties'].get('alsa.components'))) for s in json.load(sys.stdin)]"
+
+
+cd ~/nahimic-linux && git pull && cd packaging && makepkg -si
