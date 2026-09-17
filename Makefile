@@ -19,7 +19,7 @@ install: all
 	install -m644 app/assets/* $(DESTDIR)$(PREFIX)/lib/nahimic-linux/app/assets/
 	install -d $(DESTDIR)$(PREFIX)/lib/nahimic-linux/app/locales
 	install -m644 app/locales/*.json $(DESTDIR)$(PREFIX)/lib/nahimic-linux/app/locales/
-	install -m644 host/*.py $(DESTDIR)$(PREFIX)/lib/nahimic-linux/host/
+	install -m644 host/*.py host/devices.json $(DESTDIR)$(PREFIX)/lib/nahimic-linux/host/
 	install -m755 bin/* $(DESTDIR)$(PREFIX)/lib/nahimic-linux/bin/
 	install -Dm755 packaging/nahimic $(DESTDIR)$(PREFIX)/bin/nahimic
 	install -Dm644 packaging/nahimic.service $(DESTDIR)$(PREFIX)/lib/systemd/user/nahimic.service

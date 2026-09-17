@@ -1,7 +1,5 @@
 # Nahimic Linux
 
-**English** | [简体中文](README.zh-CN.md)
-
 Nahimic audio effects for laptop speakers on Linux. Includes Music, Movie, Gaming, and Communication profiles; bass, voice, and treble controls; surround sound; volume stabilization; and a ten-band equalizer. Switch between processed and original audio with one click. Volume stays in sync with the system, settings are saved automatically, and effects keep running after you close the panel.
 
 This is an independent community project. It is not affiliated with, endorsed by, or sponsored by Nahimic, A-Volute, SteelSeries, or PC manufacturers. Names, trademarks, and original assets belong to their respective owners.
@@ -25,7 +23,7 @@ Both are now defined in [host/devices.json](host/devices.json).
 
 | Hardware | Codec | Subsystem | Tuning file | Status |
 |---|---|---|---|---|
-| MECHREVO Wujie 14X Pro (Senary) | `14f11f87` | `1d05e022` | factory `1D05E022_Speakers.nsx` | Verified upstream |
+| MECHREVO Wujie 14X Pro (Senary) | `14f11f87` | `1d05e022` | factory `1D05E022_Speakers.nsx` | Verified |
 | Realtek ALC256 (any laptop) | `10ec0256` | any | borrowed `1D05E022_Speakers.nsx` | Experimental, untested |
 
 Accepted speaker ports: `[Out] Speaker` (ALSA UCM) and `analog-output-speaker` (legacy PulseAudio profiles).
@@ -71,13 +69,18 @@ nahimic --activate
 
 ## Install
 
-On Arch Linux and derivatives, the AUR package installs the **upstream** project (which only supports the original laptop):
+On Arch Linux and derivatives, build and install the package from this repository:
 
 ```sh
-yay -S nahimic-linux
+sudo pacman -S --needed base-devel git
+git clone https://github.com/KevinLKs/nahimic-linux.git
+cd nahimic-linux/packaging
+makepkg -si
 ```
 
-To use this fork (ALC256 support and English source), build it from this checkout. See "Build and install from source" below.
+`makepkg` downloads the pinned Nahimic runtime components, verifies their SHA-256 hashes, builds the host, and installs everything. Open **Nahimic** from your application menu or run `nahimic`. Initial runtime setup may take a moment.
+
+To update later, run `git pull` in the `nahimic-linux` folder, then `makepkg -si` again in `packaging`.
 
 Requires x86_64 Linux, Wine, PipeWire, PipeWire Pulse, WirePlumber 0.5 or newer, and a systemd user session. The Qt interface works with KDE, GNOME, and other desktop environments that provide these components. Effects attach automatically to the built-in speakers while you select real output devices as usual. Headphones, Bluetooth devices, and HDMI outputs use their own audio paths. Effects resume automatically when the speakers return.
 
@@ -107,7 +110,7 @@ make DESTDIR=/tmp/nahimic-stage install  # inspect the layout
 python -m unittest discover -s tests   # tests (QT_QPA_PLATFORM=offscreen on headless machines)
 ```
 
-The runtime components (Nahimic engine and factory settings) are downloaded and SHA-256 verified by [packaging/PKGBUILD](packaging/PKGBUILD) and [packaging/extract_runtime.py](packaging/extract_runtime.py). To package this fork instead of upstream, change `url` in the PKGBUILD to this fork's repository and the `source` ref to the branch or tag you want to build, then run `makepkg -si` in the `packaging` folder.
+The runtime components (Nahimic engine and factory settings) are downloaded and SHA-256 verified by [packaging/PKGBUILD](packaging/PKGBUILD) and [packaging/extract_runtime.py](packaging/extract_runtime.py). For a full installation, use the steps in "Install" above.
 
 ## Contribute device support
 
