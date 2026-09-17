@@ -19,3 +19,12 @@ cd ~/nahimic-linux && git pull && cd packaging && makepkg -si
 
 
 Detection is past the first hurdle now. The next possible failure is the Wine setup or the audio engine itself. If it fails again, send nahimic --status and journalctl --user -u nahimic.service -b.
+
+
+
+Update 200:
+tail -n 20 ~/.local/share/nahimic-linux/runtime/*.log
+
+journalctl --user -u nahimic.service -b --no-pager | tail -30
+
+pactl list short sink-inputs; pactl list short sinks
