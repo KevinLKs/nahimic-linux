@@ -10,7 +10,7 @@ from i18n import CATALOGS, LANGUAGES, Translations, resolve_locale
 
 class TranslationsTest(unittest.TestCase):
     def test_catalogs_preserve_messages_and_placeholders(self):
-        source = CATALOGS['zh_CN']
+        source = CATALOGS['en']
         placeholders = lambda text: {field for _,field,_,_ in Formatter().parse(text) if field is not None}
         for code, catalog in CATALOGS.items():
             self.assertEqual(set(source), set(catalog), code)
@@ -34,7 +34,7 @@ class TranslationsTest(unittest.TestCase):
                 translator.select(code)
                 restored=Translations(path)
                 self.assertEqual(restored.code,code)
-                self.assertEqual(restored.text('音频'), CATALOGS[code]['音频'])
+                self.assertEqual(restored.text('Audio'), CATALOGS[code]['Audio'])
             translator.select('system')
             self.assertEqual(Translations(path).choice,'system')
 

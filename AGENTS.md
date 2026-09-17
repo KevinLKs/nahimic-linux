@@ -1,26 +1,27 @@
-# AI 安装与维护指南
+# AI Installation and Maintenance Guide
 
-先阅读 README.md。用户要求安装时，检查本机依赖和设备后完成安装与验证。
+Read README.md first. When the user asks for an installation, check local dependencies and hardware, then install and verify.
 
-## 安装路径
+## Installation
 
-1. 通过 `pactl --format=json list sinks` 检查 `alsa.components` 和扬声器端口。目前验证的硬件为 `HDA:14f11f87,1d05e022,`。
-2. Arch 系列优先运行 `yay -S nahimic-linux` 或 `paru -S nahimic-linux`。有现成 AUR 工具时直接复用。
-3. 需要 WirePlumber 0.5+；保持系统选择真实输出设备。检查 `nahimic --status` 的 `ready`、`enabled`、`active`（实际有音频经过过滤器时为 true）；从系统菜单打开面板，验证音效开关、音量与参数保存。
-4. 日志使用 `journalctl --user -u nahimic.service -b`。首次初始化有延迟，判断就绪状态以运行状态为准。
+1. Run `pactl --format=json list sinks` and check `alsa.components` and the speaker port. Supported hardware is listed in `host/devices.json` (verified: `HDA:14f11f87,1d05e022,`; experimental: `HDA:10ec0256,*`).
+2. On Arch-based systems, `yay -S nahimic-linux` or `paru -S nahimic-linux` installs upstream. For this fork, build from the checkout (see README.md).
+3. WirePlumber 0.5+ is required; keep the system selecting the real output device. Check `nahimic --status` for `ready`, `enabled`, and `active` (true when audio is actually passing through the filter). Open the panel from the system menu and verify the effects switch, volume, and that settings are saved.
+4. Logs: `journalctl --user -u nahimic.service -b`. First initialization is slow; judge readiness from the runtime status.
 
-## 代码与设备适配
+## Code and device support
 
-- `app/` 为 Qt 界面；`host/` 为音频宿主、真实端点音量和用户服务；`packaging/` 为构建、运行组件校验与系统集成。
-- 音效由运行组件处理。修改前先查现有控制接口和音频链，复用已经验证的行为。
-- 新型号必须核对硬件 ID、设备配置、输出端口和实际音频连接。不能把现有型号的配置直接套给其他型号。
-- 原始工作资料保留在工作目录之外；公开提交只包含项目源文件与必要的构建元数据。
-- 新增下载源时固定版本并验证 SHA-256，更新 `runtime-sha256.json` 前核对文件内容。
-- 打包过程只能写入构建目录和 DESTDIR，不得启动用户服务或改写用户配置。安装后的激活由安装脚本完成。
-- 保留 AGENTS.md 和 CLAUDE.md 两个入口。
+- `app/` is the Qt interface; `host/` is the audio host, real endpoint volume, hardware table, and user service; `packaging/` handles builds, runtime verification, and system integration.
+- Effects are produced by the runtime components. Before changing anything, check the existing control interface and audio chain, and reuse behavior that is already verified.
+- New models must have their hardware ID, device configuration, output port, and actual audio connection checked. Add them to `host/devices.json` (or the user's `~/.config/nahimic-linux/devices.json`). Mark borrowed tuning files as `"verified": false`.
+- Keep raw working material outside the working tree; public commits contain only project source and required build metadata.
+- Pin versions and verify SHA-256 for any new download source, and check file contents before updating `runtime-sha256.json`.
+- Packaging may only write to the build directory and DESTDIR; it must not start user services or rewrite user configuration. Activation after install is done by the install script.
+- Keep both entry points, AGENTS.md and CLAUDE.md.
+- Translation keys are English source strings. New UI text must be added to every file in `app/locales/`.
 
-## 验证与 PR
+## Verification and pull requests
 
-修改构建或运行路径后，执行 `make`、`makepkg`；检查包内容、首次启动、开关、音量、参数读回和冷重启保存。音频链变更还应验证连续播放与 underrun。记录实际验证范围，避免把编译通过当作硬件适配成功。
+After changing build or runtime paths, run `make`, `makepkg`, and the tests; check package contents, first launch, the switch, volume, settings read-back, and persistence across a cold restart. Audio chain changes should also be verified with continuous playback and checked for underruns. Record the actual scope of verification; a successful compile is not proof that a hardware adaptation works.
 
-PR 描述说明型号、问题、修改后的行为和测试结果。用户授权提交 PR 时完成 commit、push 和 PR 创建；未经授权不合并。
+PR descriptions should state the model, the problem, the new behavior, and test results. Commit, push, and open the PR only when the user authorizes it; never merge without authorization.

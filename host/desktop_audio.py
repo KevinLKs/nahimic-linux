@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 import subprocess
+import devices
 
 
 def pulse(*args):
@@ -25,8 +26,8 @@ class OutputUnavailable(RuntimeError):
 
 
 def supported_speaker(sink):
-    return ("hda:14f11f87,1d05e022," in sink.get("properties", {}).get("alsa.components", "").lower()
-            and sink.get("active_port") == "[Out] Speaker")
+    """True when the sink is a known built-in speaker on its speaker port (see devices.json)."""
+    return devices.match(sink) is not None
 
 
 class DesktopAudio:

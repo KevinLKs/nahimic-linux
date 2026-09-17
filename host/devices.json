@@ -1,0 +1,20 @@
+{
+  "_comment": "Supported built-in speaker hardware. codec and subsystem are matched against the PipeWire alsa.components property (HDA:<codec>,<subsystem>,<revision>). subsystem null matches any laptop using that codec. device_file is relative to the factory settings root, or an absolute path to your own tuning file. Add local entries in ~/.config/nahimic-linux/devices.json; they take priority over this file.",
+  "speaker_ports": ["[Out] Speaker", "analog-output-speaker"],
+  "devices": [
+    {
+      "name": "MECHREVO Wujie 14X Pro (Senary)",
+      "codec": "14f11f87",
+      "subsystem": "1d05e022",
+      "device_file": "Devices/1D05E022_Speakers.nsx",
+      "verified": true
+    },
+    {
+      "name": "Realtek ALC256 (generic, experimental)",
+      "codec": "10ec0256",
+      "subsystem": null,
+      "device_file": "Devices/1D05E022_Speakers.nsx",
+      "verified": false
+    }
+  ]
+}

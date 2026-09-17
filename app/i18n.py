@@ -50,7 +50,7 @@ class Translations:
                 getter = getattr(widget, attribute, None)
                 if getter:
                     value = getter()
-                    if value in CATALOGS['zh_CN'] and (widget, attribute) not in self.bindings:
+                    if value in CATALOGS['en'] and (widget, attribute) not in self.bindings:
                         self.bind(widget, attribute, value)
 
     def select(self, choice):
@@ -59,7 +59,7 @@ class Translations:
         self.settings.sync()
         if self.settings.status() != QSettings.NoError:
             self.settings.setValue('language', self.choice)
-            raise OSError(self.text('无法保存语言设置'))
+            raise OSError(self.text('Could not save the language setting'))
         self.choice, self.code = choice, code
         self.retranslate()
 

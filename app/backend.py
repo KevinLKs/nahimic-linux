@@ -12,10 +12,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "host"))
 from desktop_audio import atomic_json, pulse
 
 PROFILES = {
-    "Music": ("音乐", "77f15d10-d6b9-11e7-8f1a-0800200c9a66"),
-    "Movie": ("电影", "77f15d11-d6b9-11e7-8f1a-0800200c9a66"),
-    "Gaming": ("游戏", "77f18421-d6b9-11e7-8f1a-0800200c9a66"),
-    "Communication": ("通话", "77f18420-d6b9-11e7-8f1a-0800200c9a66"),
+    "Music": ("Music", "77f15d10-d6b9-11e7-8f1a-0800200c9a66"),
+    "Movie": ("Movie", "77f15d11-d6b9-11e7-8f1a-0800200c9a66"),
+    "Gaming": ("Gaming", "77f18421-d6b9-11e7-8f1a-0800200c9a66"),
+    "Communication": ("Communication", "77f18420-d6b9-11e7-8f1a-0800200c9a66"),
 }
 
 
@@ -27,14 +27,14 @@ class Backend:
                                                   "WINEDLLOVERRIDES": "mscoree,mshtml="},
                                 capture_output=True, text=True, timeout=15)
         if result.returncode:
-            raise RuntimeError(result.stderr.strip()[-1200:] or "原厂音效控制失败")
+            raise RuntimeError(result.stderr.strip()[-1200:] or "Vendor effect control failed")
         return result.stdout
 
     def settings(self):
         output = self.control("--settings")
         profile = re.search(r"(?:global_profile|default_application) id=\S+ name=(\S+)", output)
         if not profile:
-            raise RuntimeError("无法读取当前音效模式")
+            raise RuntimeError("Could not read the current effect profile")
         settings = {}
         for line in output.splitlines():
             match = re.search(r"name=(kSet_\w+) value=([-+\d.eE]+)", line)
@@ -52,14 +52,14 @@ class Backend:
         self.control("--set-setting", name, str(value))
         state = self.settings()
         if abs(state["settings"][name]["value"] - float(value)) > 1e-5:
-            raise RuntimeError("音效参数未生效")
+            raise RuntimeError("The effect setting was not applied")
         return state
 
     def profile(self, name):
         self.control("--global-profile", "{" + PROFILES[name][1] + "}")
         state = self.settings()
         if state["profile"] != name:
-            raise RuntimeError("音效模式未生效")
+            raise RuntimeError("The effect profile was not applied")
         return state
 
     def enabled(self, enabled):

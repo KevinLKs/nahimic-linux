@@ -20,7 +20,8 @@ def detect():
     sinks = json.loads(pulse("--format=json", "list", "sinks"))
     matches = [s for s in sinks if supported_speaker(s)]
     if len(matches) != 1:
-        raise RuntimeError("未找到受支持的内置扬声器（1D05E022）。请选择扬声器输出后重试。")
+        raise RuntimeError("No supported built-in speakers were found (see host/devices.json and "
+                           "~/.config/nahimic-linux/devices.json). Select the speaker output and try again.")
     return matches[0]["name"]
 
 

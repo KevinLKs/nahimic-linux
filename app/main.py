@@ -181,18 +181,18 @@ class Panel(QMainWindow):
         navigation = QFrame(); navigation.setObjectName('navigation'); navigation.setFixedWidth(160)
         nav = QVBoxLayout(navigation); nav.setContentsMargins(0, 18, 0, 22); nav.setSpacing(2)
         self.audio_navigation = SpacedToolButton(); self.audio_navigation.setObjectName('navigationButton')
-        self.audio_navigation.setText('音频'); self.audio_navigation.setIcon(QIcon(str(ASSETS/'Audio16x16.png')))
+        self.audio_navigation.setText('Audio'); self.audio_navigation.setIcon(QIcon(str(ASSETS/'Audio16x16.png')))
         self.audio_navigation.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.audio_navigation.setCheckable(True); self.audio_navigation.setChecked(True)
         self.audio_navigation.clicked.connect(lambda: self.audio_navigation.setChecked(True))
         self.audio_navigation.setFixedWidth(160); nav.addWidget(self.audio_navigation)
-        settings = SpacedToolButton(); settings.setObjectName('navigationButton'); settings.setText('设置')
+        settings = SpacedToolButton(); settings.setObjectName('navigationButton'); settings.setText('Settings')
         settings.setIcon(QIcon(str(ASSETS/'Settings16x16.png'))); settings.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         settings.setFixedWidth(160); settings.clicked.connect(self.show_preferences); nav.addWidget(settings)
         nav.addStretch()
         logo = QLabel(); logo.setPixmap(asset('LogoNahimicSteelSeries.png').scaledToWidth(94, Qt.SmoothTransformation))
         logo.setAlignment(Qt.AlignCenter); nav.addWidget(logo)
-        community = QLabel('社区版本 · 非官方'); community.setObjectName('community'); community.setWordWrap(True); community.setAlignment(Qt.AlignCenter); nav.addWidget(community)
+        community = QLabel('Community edition · Unofficial'); community.setObjectName('community'); community.setWordWrap(True); community.setAlignment(Qt.AlignCenter); nav.addWidget(community)
         shell.addWidget(navigation)
 
         self.controls = QWidget(); body = QHBoxLayout(self.controls); body.setContentsMargins(0,0,0,0); body.setSpacing(0)
@@ -200,10 +200,10 @@ class Panel(QMainWindow):
         device = QFrame(); device.setObjectName('device'); device.setFixedWidth(88)
         volume_layout = QVBoxLayout(device); volume_layout.setContentsMargins(6, 22, 6, 25); volume_layout.setSpacing(10)
         speaker = QLabel(); speaker.setPixmap(asset('Speakers30x30.png')); speaker.setAlignment(Qt.AlignCenter); volume_layout.addWidget(speaker)
-        label = QLabel('扬声器'); label.setWordWrap(True); label.setObjectName('caption'); label.setAlignment(Qt.AlignCenter); volume_layout.addWidget(label)
-        self.mute = Toggle('静音', mute=True); self.mute.clicked.connect(lambda checked: self.submit(lambda: self.backend.mute(checked), 'state', 'muted', checked))
+        label = QLabel('Speakers'); label.setWordWrap(True); label.setObjectName('caption'); label.setAlignment(Qt.AlignCenter); volume_layout.addWidget(label)
+        self.mute = Toggle('Mute', mute=True); self.mute.clicked.connect(lambda checked: self.submit(lambda: self.backend.mute(checked), 'state', 'muted', checked))
         volume_layout.addWidget(self.mute, 0, Qt.AlignHCenter)
-        self.volume = ControlSlider(Qt.Vertical); self.volume.setRange(0,100); self.volume.setFixedWidth(26); self.volume.setAccessibleName('扬声器音量')
+        self.volume = ControlSlider(Qt.Vertical); self.volume.setRange(0,100); self.volume.setFixedWidth(26); self.volume.setAccessibleName('Speaker volume')
         self.volume.sliderReleased.connect(lambda: self.submit(lambda v=self.volume.value(): self.backend.volume(v), 'state', 'volume', self.volume.value()))
         volume_layout.addWidget(self.volume, 1, Qt.AlignHCenter)
         self.volume_value = QLabel('—'); self.volume_value.setObjectName('readout'); self.volume_value.setAlignment(Qt.AlignCenter)
@@ -212,12 +212,12 @@ class Panel(QMainWindow):
         page = QVBoxLayout(); page.setContentsMargins(0,0,0,0); page.setSpacing(0); body.addLayout(page,1)
 
         header = QHBoxLayout(); header.setContentsMargins(16, 10, 20, 6); header.setSpacing(12)
-        self.power = Toggle('启用音效'); self.power.clicked.connect(lambda checked: self.submit(lambda: self.backend.enabled(checked), 'state', 'enabled', checked))
+        self.power = Toggle('Enable effects'); self.power.clicked.connect(lambda checked: self.submit(lambda: self.backend.enabled(checked), 'state', 'enabled', checked))
         header.addWidget(self.power)
-        self.power_label = QLabel('正在连接'); self.power_label.setObjectName('caption'); self.power_label.setMinimumWidth(130); self.power_label.setWordWrap(True); header.addWidget(self.power_label)
-        title = QLabel('音频'); title.setObjectName('heading'); title.setAlignment(Qt.AlignCenter); header.addWidget(title,1); header.addSpacing(180)
+        self.power_label = QLabel('Connecting'); self.power_label.setObjectName('caption'); self.power_label.setMinimumWidth(130); self.power_label.setWordWrap(True); header.addWidget(self.power_label)
+        title = QLabel('Audio'); title.setObjectName('heading'); title.setAlignment(Qt.AlignCenter); header.addWidget(title,1); header.addSpacing(180)
         self.power.toggled.connect(lambda checked: self.translations.bind(
-            self.power_label, 'text', '音效已开启' if checked else '音效已关闭'))
+            self.power_label, 'text', 'Effects on' if checked else 'Effects off'))
         page.addLayout(header)
 
         self.profiles = QFrame(); self.profiles.setObjectName('profileBar')
@@ -233,10 +233,10 @@ class Panel(QMainWindow):
             group.addButton(button); self.modes[name]=button; profile_layout.addWidget(button,1)
         page.addWidget(self.profiles)
         toolbar = QFrame(); toolbar.setObjectName('toolbar'); tools = QHBoxLayout(toolbar); tools.setContentsMargins(12,7,16,7)
-        eq_button = SpacedToolButton(); eq_button.setText('均衡器'); eq_button.setIcon(QIcon(str(ASSETS/'EqualiserNormal24x24.png')))
+        eq_button = SpacedToolButton(); eq_button.setText('Equalizer'); eq_button.setIcon(QIcon(str(ASSETS/'EqualiserNormal24x24.png')))
         eq_button.setIconSize(QSize(24,24)); eq_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         eq_button.clicked.connect(self.show_equalizer); tools.addWidget(eq_button); tools.addStretch()
-        self.status = QLabel('正在连接音效服务…'); self.status.setObjectName('caption'); self.status.setWordWrap(True); tools.addWidget(self.status)
+        self.status = QLabel('Connecting to audio service…'); self.status.setObjectName('caption'); self.status.setWordWrap(True); tools.addWidget(self.status)
         page.addWidget(toolbar)
 
         upper = QHBoxLayout(); upper.setContentsMargins(0,0,0,0); upper.setSpacing(0)
@@ -244,31 +244,31 @@ class Panel(QMainWindow):
         globe = QLabel(); globe.setFixedSize(170,170); globe.setAlignment(Qt.AlignCenter); surround_layout.addWidget(globe)
         self.effect_images['kSet_SpkVirtualSurroundState'] = (globe, 'SoundSurroundOn255x255.png', 'SoundSurroundOff255x255.png')
         surround_text = QVBoxLayout(); surround_text.setSpacing(18)
-        row=QHBoxLayout(); label=QLabel('环绕声'); label.setObjectName('effectTitle'); label.setWordWrap(True); row.addWidget(label); row.addStretch()
-        switch=self.effect_switch('kSet_SpkVirtualSurroundState','启用环绕声'); row.addWidget(switch); surround_text.addLayout(row)
-        description=QLabel('让声音从四周传来，带来更有空间感的聆听体验。'); description.setObjectName('caption'); description.setWordWrap(True)
+        row=QHBoxLayout(); label=QLabel('Surround sound'); label.setObjectName('effectTitle'); label.setWordWrap(True); row.addWidget(label); row.addStretch()
+        switch=self.effect_switch('kSet_SpkVirtualSurroundState','Enable surround sound'); row.addWidget(switch); surround_text.addLayout(row)
+        description=QLabel('Hear sound all around you for a more immersive listening experience.'); description.setObjectName('caption'); description.setWordWrap(True)
         surround_text.addWidget(description); surround_text.addStretch(); surround_layout.addLayout(surround_text,1)
         upper.addWidget(surround,2)
         compressor=QFrame(); compressor.setObjectName('effect'); compressor_layout=QVBoxLayout(compressor); compressor_layout.setContentsMargins(22,14,14,16); compressor_layout.setSpacing(9)
-        row=QHBoxLayout(); label=QLabel('音量稳定器'); label.setObjectName('effectTitle'); label.setWordWrap(True); row.addWidget(label); row.addStretch()
-        row.addWidget(self.effect_switch('kSet_CompressorState','启用音量稳定器')); compressor_layout.addLayout(row)
+        row=QHBoxLayout(); label=QLabel('Volume stabilizer'); label.setObjectName('effectTitle'); label.setWordWrap(True); row.addWidget(label); row.addStretch()
+        row.addWidget(self.effect_switch('kSet_CompressorState','Enable volume stabilizer')); compressor_layout.addLayout(row)
         wave=QLabel(); wave.setFixedSize(100,75); wave.setAlignment(Qt.AlignCenter); compressor_layout.addWidget(wave,0,Qt.AlignHCenter)
         self.effect_images['kSet_CompressorState']=(wave,'VolumeStabiliserOn80x60.png','VolumeStabilizerOff80x60.png')
-        description=QLabel('保持音量均衡，减少声音忽大忽小。'); description.setObjectName('caption'); description.setWordWrap(True); description.setAlignment(Qt.AlignCenter); compressor_layout.addWidget(description); compressor_layout.addStretch()
+        description=QLabel('Keep volume consistent and reduce sudden changes.'); description.setObjectName('caption'); description.setWordWrap(True); description.setAlignment(Qt.AlignCenter); compressor_layout.addWidget(description); compressor_layout.addStretch()
         upper.addWidget(compressor,1); page.addLayout(upper,1)
 
         lower=QHBoxLayout(); lower.setContentsMargins(0,0,0,0); lower.setSpacing(0)
-        for title,state,gain,description in (
-            ('人声','kSet_VoiceBoostState','kSet_VoiceBoostGainDB','调整对白与歌声的清晰度'),
-            ('低音','kSet_BassBoostState','kSet_BassBoostGainDB','调整低频声音的力度与厚度'),
-            ('高音','kSet_TrebleBoostState','kSet_TrebleBoostGainDB','调整声音细节与明亮度')):
+        for title,state,gain,description,enable_text,gain_text in (
+            ('Voices','kSet_VoiceBoostState','kSet_VoiceBoostGainDB','Adjust dialogue and vocal clarity','Enable voices','Voice gain'),
+            ('Bass','kSet_BassBoostState','kSet_BassBoostGainDB','Adjust the depth and impact of bass','Enable bass','Bass gain'),
+            ('Treble','kSet_TrebleBoostState','kSet_TrebleBoostGainDB','Adjust detail and brightness','Enable treble','Treble gain')):
             effect=QFrame(); effect.setObjectName('effect'); column=QVBoxLayout(effect); column.setContentsMargins(22,12,14,16); column.setSpacing(6)
             row=QHBoxLayout(); row.addSpacing(38); label=QLabel(title); label.setObjectName('effectTitle'); label.setWordWrap(True); label.setAlignment(Qt.AlignCenter); row.addWidget(label,1)
-            row.addWidget(self.effect_switch(state,'启用'+title)); column.addLayout(row)
+            row.addWidget(self.effect_switch(state,enable_text)); column.addLayout(row)
             readout=QHBoxLayout(); readout.setSpacing(6); readout.addStretch()
             value=QLabel('0'); value.setObjectName('value'); value.setFixedHeight(54); readout.addWidget(value)
             unit=QLabel('dB'); unit.setObjectName('caption'); readout.addWidget(unit,0,Qt.AlignVCenter); readout.addStretch(); column.addLayout(readout)
-            slider=ControlSlider(Qt.Horizontal); slider.setFixedWidth(130); slider.setAccessibleName(title+'增益')
+            slider=ControlSlider(Qt.Horizontal); slider.setFixedWidth(130); slider.setAccessibleName(gain_text)
             slider.valueChanged.connect(lambda v,l=value:l.setText(str(v)))
             slider.sliderReleased.connect(lambda n=gain,s=slider:self.submit(lambda v=s.value():self.backend.set_setting(n,v),'settings',n,s.value()))
             self.values[gain]=slider; column.addWidget(slider,0,Qt.AlignHCenter)
@@ -276,9 +276,9 @@ class Panel(QMainWindow):
             lower.addWidget(effect,1)
         page.addLayout(lower,1)
 
-        self.equalizer=QDialog(self); self.equalizer.setWindowTitle('均衡器'); self.equalizer.resize(750,470); self.equalizer.setMinimumSize(660,440)
+        self.equalizer=QDialog(self); self.equalizer.setWindowTitle('Equalizer'); self.equalizer.resize(750,470); self.equalizer.setMinimumSize(660,440)
         eq=QVBoxLayout(); eq.setContentsMargins(24,16,24,24); eq.setSpacing(20)
-        row=QHBoxLayout(); label=QLabel('均衡器'); label.setObjectName('effectTitle'); label.setWordWrap(True); row.addWidget(label); row.addStretch(); row.addWidget(self.effect_switch('kSet_EQState','启用均衡器')); eq.addLayout(row)
+        row=QHBoxLayout(); label=QLabel('Equalizer'); label.setObjectName('effectTitle'); label.setWordWrap(True); row.addWidget(label); row.addStretch(); row.addWidget(self.effect_switch('kSet_EQState','Enable equalizer')); eq.addLayout(row)
         bands=QHBoxLayout(); bands.setSpacing(12)
         scale=QVBoxLayout(); scale.setContentsMargins(0,25,0,25)
         self.scale_high=QLabel('+12'); self.scale_low=QLabel('−12')
@@ -288,33 +288,33 @@ class Panel(QMainWindow):
         bands.addLayout(scale)
         for band,label in (('31Hz','31'),('62Hz','62'),('125Hz','125'),('250Hz','250'),('500Hz','500'),('1kHz','1k'),('2kHz','2k'),('4kHz','4k'),('8kHz','8k'),('16kHz','16k')):
             name='kSet_EQ'+band+'GainDB'; column=QVBoxLayout(); value=QLabel('0'); value.setObjectName('readout'); value.setAlignment(Qt.AlignCenter); column.addWidget(value)
-            slider=ControlSlider(Qt.Vertical); slider.setMinimumHeight(180); slider.setFixedWidth(24); self.translations.bind(slider, 'accessibleName', '{frequency} Hz 增益', frequency=label)
+            slider=ControlSlider(Qt.Vertical); slider.setMinimumHeight(180); slider.setFixedWidth(24); self.translations.bind(slider, 'accessibleName', '{frequency} Hz gain', frequency=label)
             slider.valueChanged.connect(lambda v,l=value:l.setText(f'{v:+d}' if v else '0'))
             slider.sliderReleased.connect(lambda n=name,s=slider:self.submit(lambda v=s.value():self.backend.set_setting(n,v),'settings',n,s.value()))
             self.values[name]=slider; column.addWidget(slider,1,Qt.AlignHCenter)
             frequency=QLabel(label); frequency.setObjectName('caption'); frequency.setAlignment(Qt.AlignCenter); column.addWidget(frequency); bands.addLayout(column,1)
         eq.addLayout(bands,1)
-        done=QPushButton('完成'); done.clicked.connect(self.equalizer.accept); eq.addWidget(done,0,Qt.AlignRight)
+        done=QPushButton('Done'); done.clicked.connect(self.equalizer.accept); eq.addWidget(done,0,Qt.AlignRight)
 
-        self.preferences = QDialog(self); self.preferences.setWindowTitle('设置'); self.preferences.setMinimumWidth(510)
+        self.preferences = QDialog(self); self.preferences.setWindowTitle('Settings'); self.preferences.setMinimumWidth(510)
         preferences_outer = QVBoxLayout(self.preferences); preferences_outer.setContentsMargins(1,1,1,1); preferences_outer.setSpacing(0)
         preferences_body = QWidget(); preferences_outer.addWidget(preferences_body)
         preferences_layout = QVBoxLayout(preferences_body); preferences_layout.setContentsMargins(24,20,24,24); preferences_layout.setSpacing(18)
         language_row = QHBoxLayout(); language_row.setSpacing(18)
-        language_label = QLabel('语言'); language_row.addWidget(language_label)
-        self.language = QComboBox(); self.language.setAccessibleName('语言')
-        self.language.addItem(self.translations.text('跟随系统'), 'system')
+        language_label = QLabel('Language'); language_row.addWidget(language_label)
+        self.language = QComboBox(); self.language.setAccessibleName('Language')
+        self.language.addItem(self.translations.text('System default'), 'system')
         for code, label in LANGUAGES.items(): self.language.addItem(label, code)
         self.language.setCurrentIndex(self.language.findData(self.translations.choice))
         self.language.activated.connect(self.change_language); language_row.addWidget(self.language,1); preferences_layout.addLayout(language_row)
-        self.auto = QCheckBox('登录后自动运行音效')
+        self.auto = QCheckBox('Start effects at login')
         self.auto.clicked.connect(lambda checked: self.submit(lambda: self.backend.autostart(checked), 'state', 'autostart', checked)); preferences_layout.addWidget(self.auto)
-        note = QLabel('关闭窗口后，音效继续运行。模式和参数会自动保存。'); note.setObjectName('muted'); note.setWordWrap(True); preferences_layout.addWidget(note)
-        about = QLabel('关于'); about.setObjectName('effectTitle'); preferences_layout.addWidget(about)
+        note = QLabel('Effects keep running after closing the window. Profiles and settings are saved automatically.'); note.setObjectName('muted'); note.setWordWrap(True); preferences_layout.addWidget(note)
+        about = QLabel('About'); about.setObjectName('effectTitle'); preferences_layout.addWidget(about)
         version = QLabel('Nahimic Linux  0.3.0'); version.setObjectName('caption'); preferences_layout.addWidget(version)
-        disclaimer = QLabel('这是独立的社区项目，与 Nahimic、A-Volute、SteelSeries 及电脑厂商无隶属关系，也未获其认可或赞助。相关名称、商标和原厂资源归各自权利人所有。')
+        disclaimer = QLabel('This independent community project is not affiliated with, endorsed by, or sponsored by Nahimic, A-Volute, SteelSeries, or PC manufacturers. Names, trademarks, and original assets belong to their respective owners.')
         disclaimer.setWordWrap(True); disclaimer.setObjectName('muted'); disclaimer.setMaximumWidth(460); preferences_layout.addWidget(disclaimer)
-        close_button = QPushButton('完成'); close_button.clicked.connect(self.preferences.accept); preferences_layout.addWidget(close_button,0,Qt.AlignRight)
+        close_button = QPushButton('Done'); close_button.clicked.connect(self.preferences.accept); preferences_layout.addWidget(close_button,0,Qt.AlignRight)
         self.preferences_titlebar = decorate(self.preferences, preferences_outer)
         # Keep dialog chrome flush to the window while retaining content padding.
         eq_outer = QVBoxLayout(); eq_outer.setContentsMargins(1,1,1,1); eq_outer.setSpacing(0)
@@ -332,9 +332,9 @@ class Panel(QMainWindow):
             self.translations.select(self.language.itemData(index))
         except OSError as error:
             self.language.setCurrentIndex(self.language.findData(self.translations.choice))
-            QMessageBox.warning(self, self.translations.text('设置'), str(error))
+            QMessageBox.warning(self, self.translations.text('Settings'), str(error))
             return
-        self.language.setItemText(0, self.translations.text('跟随系统'))
+        self.language.setItemText(0, self.translations.text('System default'))
         self.preferences.adjustSize()
 
     def effect_switch(self, name, label):
@@ -360,7 +360,7 @@ class Panel(QMainWindow):
 
     def show_pending_status(self):
         if self.pending_keys() and not self.error_message:
-            self.translations.bind(self.status, 'text', '正在应用…')
+            self.translations.bind(self.status, 'text', 'Applying…')
 
     def submit(self, function, kind, key=None, value=None):
         if key is not None:
@@ -396,19 +396,19 @@ class Panel(QMainWindow):
 
     def show_status(self):
         if self.error_message:
-            self.translations.bind(self.status, 'text', '操作未完成：{error}', error=self.error_message)
+            self.translations.bind(self.status, 'text', 'Could not complete the operation: {error}', error=self.error_message)
         elif self.pending_keys():
             if not self.busy_timer.isActive(): self.show_pending_status()
         elif self.last_status:
             result = self.last_status
             if result['ready']:
-                self.translations.bind(self.status, 'text', '音效正在运行' if result['active'] else
-                    '正在播放原声' if not result['enabled'] else '音效已开启，等待扬声器播放')
+                self.translations.bind(self.status, 'text', 'Effects are running' if result['active'] else
+                    'Playing original audio' if not result['enabled'] else 'Effects enabled. Waiting for speaker playback.')
             elif result.get('waiting_for_speakers'):
-                self.translations.bind(self.status, 'text', '等待内置扬声器，其他输出正常使用')
+                self.translations.bind(self.status, 'text', 'Waiting for built-in speakers. Other outputs remain available.')
             else:
-                self.translations.bind(self.status, 'text', '正在准备音效，请稍候…' if
-                    result['service'] in ('active', 'activating') else '音效服务未运行，请关闭并重新打开软件。')
+                self.translations.bind(self.status, 'text', 'Preparing effects. Please wait…' if
+                    result['service'] in ('active', 'activating') else 'The audio service is not running. Close and reopen the app.')
 
     def apply_status(self, result):
         self.last_status = result
@@ -425,20 +425,20 @@ class Panel(QMainWindow):
                 del self.awaiting_state[key]
             elif time.monotonic() >= deadline:
                 del self.awaiting_state[key]
-                self.error_message = self.translations.text('设置未获系统确认，已重新读取当前状态。')
+                self.error_message = self.translations.text('The system did not confirm the change. Current state has been reloaded.')
         protected = self.pending_keys()
         if 'autostart' not in protected: self.auto.setChecked(result['autostart'])
         if ready:
             if 'enabled' not in protected:
                 self.power.setChecked(result['enabled'])
-                self.translations.bind(self.power_label, 'text', '音效已开启' if result['enabled'] else '音效已关闭')
+                self.translations.bind(self.power_label, 'text', 'Effects on' if result['enabled'] else 'Effects off')
             if 'volume' not in protected and not self.volume.isSliderDown():
                 self.volume.setValue(result['volume'])
             if 'muted' not in protected: self.mute.setChecked(result['muted'])
             if not self.settings_loaded:
                 self.jobs.appendleft((self.backend.settings, 'settings', None, None))
         else:
-            self.translations.bind(self.power_label, 'text', '等待连接')
+            self.translations.bind(self.power_label, 'text', 'Waiting for connection')
         self.show_status()
 
     def poll(self):
@@ -486,7 +486,7 @@ class Panel(QMainWindow):
 
     def apply_settings(self,state):
         if state['profile'] not in self.modes:
-            raise ValueError(self.translations.text('未知音效预设：{profile}', profile=state['profile']))
+            raise ValueError(self.translations.text('Unknown audio preset: {profile}', profile=state['profile']))
         protected = self.pending_keys()
         if 'profile' in protected:
             return
@@ -509,7 +509,7 @@ def main():
     socket_name=str(runtime/'nahimic-panel.socket')
     if not lock.tryLock(0):
         socket=QLocalSocket();socket.connectToServer(socket_name)
-        if not socket.waitForConnected(1000):raise RuntimeError("音效窗口已运行，但无法联系窗口")
+        if not socket.waitForConnected(1000):raise RuntimeError("The effects window is already running but could not be reached")
         socket.write(b'show');socket.waitForBytesWritten(1000)
         return
     QLocalServer.removeServer(socket_name);server=QLocalServer()
