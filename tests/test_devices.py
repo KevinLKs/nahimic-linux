@@ -21,6 +21,14 @@ class DevicesTest(unittest.TestCase):
         entry = devices.match(sink('HDA:14f11f87,1d05e022,00100100'), self.table)
         self.assertTrue(entry['verified'])
 
+    def test_intel_dsp_sink_listing_several_codecs(self):
+        # Intel SOF/DSP machines list the HDMI codec first; the analog codec must still match.
+        real = 'HDA:8086281c,80860101,00100000 HDA:10ec0256,1c05c022,00100002 cfg-dmics:2'
+        self.assertEqual(devices.match(sink(real), self.table)['codec'], '10ec0256')
+        hdmi = 'HDA:8086281c,80860101,00100000 HDA:10ec0256,1462139b,00100002 cfg-dmics:2'
+        self.assertIsNone(devices.match(sink(hdmi, '[Out] HDMI3'), self.table))
+        self.assertIsNone(devices.match(sink(hdmi), self.table))
+
     def test_realtek_alc256_speakers_on_both_port_names(self):
         for port in ('[Out] Speaker', 'analog-output-speaker'):
             entry = devices.match(sink('HDA:10ec0256,1c05c022,00100002 HDA:8086280b,80860101,00100000', port), self.table)

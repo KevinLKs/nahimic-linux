@@ -21,8 +21,8 @@ def describe(sinks):
     """Human-readable report of the outputs seen and the hardware the table accepts."""
     lines = ["Outputs found:"]
     for sink in sinks:
-        codec, subsystem = devices.components(sink)
-        hardware = f"{codec},{subsystem}" if codec else "not an HDA device"
+        present = devices.components(sink)
+        hardware = " ".join(f"{c},{s}" for c, s in present) if present else "not an HDA device"
         lines.append(f"  {sink['name']}  port={sink.get('active_port')!r}  hardware={hardware}")
     known, ports = devices.load()
     lines.append("Supported hardware:")

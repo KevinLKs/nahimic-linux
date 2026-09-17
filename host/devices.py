@@ -21,14 +21,20 @@ def load(user_path=USER):
 
 
 def components(sink):
-    """Return (codec, subsystem) from alsa.components, e.g. HDA:10ec0256,1028087c,00100002."""
+    """Return every (codec, subsystem) pair in alsa.components.
+
+    A sink can list several codecs, e.g. on Intel SOF/DSP machines where the
+    HDMI codec and the analog codec both appear:
+    "HDA:8086281c,80860101,00100000 HDA:10ec0256,1c05c022,00100002 cfg-dmics:2".
+    """
     value = sink.get("properties", {}).get("alsa.components", "").lower()
+    found = []
     for part in value.split():
         if part.startswith("hda:"):
             fields = part[4:].split(",")
             if len(fields) >= 2:
-                return fields[0], fields[1]
-    return None, None
+                found.append((fields[0], fields[1]))
+    return found
 
 
 def match(sink, table=None):
@@ -36,12 +42,11 @@ def match(sink, table=None):
     devices, ports = table or load()
     if sink.get("active_port") not in ports:
         return None
-    codec, subsystem = components(sink)
-    if codec is None:
-        return None
+    present = components(sink)
     for device in devices:
-        if device["codec"].lower() != codec:
-            continue
-        if device.get("subsystem") in (None, "", "*") or device["subsystem"].lower() == subsystem:
-            return device
+        for codec, subsystem in present:
+            if device["codec"].lower() != codec:
+                continue
+            if device.get("subsystem") in (None, "", "*") or device["subsystem"].lower() == subsystem:
+                return device
     return None
