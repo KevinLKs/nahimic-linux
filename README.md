@@ -40,7 +40,7 @@ This step only reads information. It does not change your system, and you do not
 4. Look at the output. You should see a line similar to:
 
    ```
-   alsa_output.pci-0000_00_1f.3.analog-stereo | analog-output-speaker | HDA:10ec0256,1028087c,00100002
+   alsa_output.pci-0000_00_1f.3.analog-stereo | analog-output-speaker | HDA:10ec0256,1c05c022,00100002
    ```
 
    Check both of these on the same line:
@@ -48,14 +48,15 @@ This step only reads information. It does not change your system, and you do not
    | Check | What you need to see |
    |---|---|
    | Middle column (port) | `[Out] Speaker` or `analog-output-speaker` |
-   | Last column (hardware) | starts with `HDA:10ec0256,` (Realtek ALC256) or `HDA:14f11f87,1d05e022,` (MECHREVO Wujie 14X Pro) |
+   | Last column (hardware) | `HDA:10ec0256,1c05c022,` (Realtek ALC256) or `HDA:14f11f87,1d05e022,` (MECHREVO Wujie 14X Pro) |
 
 5. Decide:
    - **Both checks match:** continue to Step 2.
    - **Hardware matches but the port says headphones:** go back to items 1 and 2, then run the command again.
-   - **Hardware does not match:** stop here. Your chip is not supported yet. Open an issue and include the full output of the command.
+   - **Codec matches (`10ec0256`) but the subsystem differs:** your laptop is an ALC256 with different speakers. Add your own entry as shown in "Adding a device" below, using your subsystem ID.
+   - **Codec does not match:** stop here. Your chip is not supported yet. Open an issue and include the full output of the command.
 
-Write down the middle value of the hardware ID (in the example above, `1028087c`). This is your laptop's **subsystem ID**. You may need it in Step 6.
+Write down the middle value of the hardware ID (in the example above, `1c05c022`). This is your laptop's **subsystem ID**. You may need it in Step 6.
 
 ### Step 2: Enable the multilib repository
 
@@ -130,7 +131,7 @@ Only do this if your laptop originally shipped with Nahimic on Windows and you c
 
 1. On the Windows side (or a Windows backup), look in `C:\Windows\System32\DriverStore\FileRepository\` for a file named like `*ProductSettings.cab`, or for a `Devices\<SUBSYSTEM ID>_Speakers.nsx` file matching the subsystem ID from Step 1.
 2. If you found a `.cab` file, extract it on Linux with `cabextract` and find the `Devices/<SUBSYSTEM ID>_Speakers.nsx` file inside.
-3. Copy the `.nsx` file to your Linux home folder, for example `~/nahimic/1028087C_Speakers.nsx`.
+3. Copy the `.nsx` file to your Linux home folder, for example `~/nahimic/1C05C022_Speakers.nsx`.
 4. Create the file `~/.config/nahimic-linux/devices.json` with this content, replacing the subsystem ID and path with yours (use lowercase for `subsystem` and the full path, not `~`):
 
    ```json
@@ -139,8 +140,8 @@ Only do this if your laptop originally shipped with Nahimic on Windows and you c
        {
          "name": "My laptop (ALC256, own tuning)",
          "codec": "10ec0256",
-         "subsystem": "1028087c",
-         "device_file": "/home/YOURNAME/nahimic/1028087C_Speakers.nsx",
+         "subsystem": "1c05c022",
+         "device_file": "/home/YOURNAME/nahimic/1C05C022_Speakers.nsx",
          "verified": false
        }
      ]
@@ -158,6 +159,46 @@ Only do this if your laptop originally shipped with Nahimic on Windows and you c
 6. Repeat Step 5 to confirm everything works.
 
 ---
+
+## Adding more hardware later
+
+Supported hardware lives in a plain JSON table that is read at startup, so adding a laptop needs no rebuild and no code changes. You need the codec and subsystem values from the hardware ID in Step 1, in lowercase.
+
+**For your own machines**, create `~/.config/nahimic-linux/devices.json`. Entries there are checked before the built-in table, and package updates never touch them:
+
+```json
+{
+  "devices": [
+    {
+      "name": "Other laptop",
+      "codec": "10ec0256",
+      "subsystem": "1043abcd",
+      "device_file": "Devices/1D05E022_Speakers.nsx",
+      "verified": false
+    }
+  ]
+}
+```
+
+Then run `nahimic --activate` so the service picks up the new speaker output. Notes:
+
+- `subsystem` can be `null` to match every laptop using that codec.
+- `device_file` is the speaker tuning. Point it at `Devices/1D05E022_Speakers.nsx` to borrow the existing tuning, or at the full path of your own `.nsx` file (see Step 6).
+- Leave `verified` as `false` unless you have tested that entry on the machine itself.
+
+**For everyone**, add the entry to [host/devices.json](host/devices.json) in the repository instead, then commit, push, and reinstall. Do not edit the installed copy under `/usr/lib/nahimic-linux/`, because a package update overwrites it.
+
+## Moving to another distribution
+
+**Another Arch-based distribution** (Arch, EndeavourOS, Manjaro, Garuda, and similar): nothing changes. Use the same steps in the setup guide. Your settings in `~/.local/share/nahimic-linux/` and `~/.config/nahimic-linux/` carry over if you keep your home folder. Distributions that update packages more slowly may ship an older Wine or PySide6, which is the first thing to check if it works on one system but not another.
+
+**A distribution that is not Arch-based** (Fedora, Ubuntu, openSUSE, NixOS): there is no installer. The `packaging/` folder uses `pacman` and `makepkg`. Everything else is portable, so a manual install is possible but not quick:
+
+1. Install the equivalents of the dependencies listed in [packaging/PKGBUILD](packaging/PKGBUILD): Wine, PySide6, PipeWire, PipeWire Pulse, WirePlumber 0.5+, libpulse, systemd, plus MinGW-w64 GCC and cabextract for the build.
+2. Download the two runtime files listed in the `source` array of the PKGBUILD by hand.
+3. Run `python packaging/extract_runtime.py <cab> <exe> runtime` to unpack and hash-verify them, then copy `runtime/vendor` and `runtime/factory` to `/usr/share/nahimic-linux/`.
+4. Run `make` and `sudo make install`.
+5. Run `nahimic --activate`.
 
 ## Updating
 
@@ -226,7 +267,7 @@ Both are defined in [host/devices.json](host/devices.json). Entries in `~/.confi
 | Hardware | Codec | Subsystem | Tuning file | Status |
 |---|---|---|---|---|
 | MECHREVO Wujie 14X Pro (Senary) | `14f11f87` | `1d05e022` | factory `1D05E022_Speakers.nsx` | Verified |
-| Realtek ALC256 (any laptop) | `10ec0256` | any | borrowed `1D05E022_Speakers.nsx` | Experimental |
+| Realtek ALC256 laptop | `10ec0256` | `1c05c022` | borrowed `1D05E022_Speakers.nsx` | Experimental |
 
 Accepted speaker ports: `[Out] Speaker` (ALSA UCM) and `analog-output-speaker` (legacy profiles).
 

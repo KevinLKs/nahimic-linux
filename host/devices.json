@@ -10,9 +10,9 @@
       "verified": true
     },
     {
-      "name": "Realtek ALC256 (generic, experimental)",
+      "name": "Realtek ALC256, subsystem 1C05C022 (experimental)",
       "codec": "10ec0256",
-      "subsystem": null,
+      "subsystem": "1c05c022",
       "device_file": "Devices/1D05E022_Speakers.nsx",
       "verified": false
     }
