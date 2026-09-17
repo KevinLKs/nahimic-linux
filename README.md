@@ -2,95 +2,195 @@
 
 Nahimic audio effects for laptop speakers on Linux. Includes Music, Movie, Gaming, and Communication profiles; bass, voice, and treble controls; surround sound; volume stabilization; and a ten-band equalizer. Switch between processed and original audio with one click. Volume stays in sync with the system, settings are saved automatically, and effects keep running after you close the panel.
 
-This is an independent community project. It is not affiliated with, endorsed by, or sponsored by Nahimic, A-Volute, SteelSeries, or PC manufacturers. Names, trademarks, and original assets belong to their respective owners.
+This fork adds support for the **Realtek ALC256** audio chip and uses English as the source language. It is based on [wearzdk/nahimic-linux](https://github.com/wearzdk/nahimic-linux).
 
-This repository is a fork of [wearzdk/nahimic-linux](https://github.com/wearzdk/nahimic-linux). The fork adds English as the source language and a hardware table so more codecs (starting with the Realtek ALC256) can be supported.
+This is an independent community project. It is not affiliated with, endorsed by, or sponsored by Nahimic, A-Volute, SteelSeries, or PC manufacturers. Names, trademarks, and original assets belong to their respective owners.
 
 ![Nahimic Linux control panel](docs/panel.png)
 
-*Chinese interface shown. The app supports 12 interface languages and uses English by default for unsupported locales.*
+---
 
-## How it works
+## Setup guide
 
-The effects are produced by the original Windows Nahimic APO4 audio engine, running under Wine inside a dedicated prefix. PipeWire sends speaker audio to that engine as 48 kHz stereo float PCM and plays the processed result on the real speaker output. Because the engine only sees PCM, it does not care which audio codec is in the laptop. What is hardware specific is:
+Follow these steps **in order**. Do not skip ahead. Every command is typed into a terminal on the Linux laptop you want to use.
 
-1. **Detection:** which PipeWire sink counts as "the built-in speakers".
-2. **Tuning:** the device settings file (`Devices/*_Speakers.nsx`) that the engine loads. The pinned download only contains the tuning for the original laptop (subsystem `1D05E022`).
+### Before you start: requirements
 
-Both are now defined in [host/devices.json](host/devices.json).
+You need all of the following. If any are missing, this project will not work on your machine.
 
-## Supported hardware
+- An **Arch Linux** based distribution (Arch, EndeavourOS, Manjaro, CachyOS, Garuda, and similar). The installer uses `pacman` and `makepkg`.
+- A 64-bit (x86_64) laptop.
+- **PipeWire** as your sound system (the default on current Arch-based systems).
+- A supported audio chip (you check this in Step 1).
 
-| Hardware | Codec | Subsystem | Tuning file | Status |
-|---|---|---|---|---|
-| MECHREVO Wujie 14X Pro (Senary) | `14f11f87` | `1d05e022` | factory `1D05E022_Speakers.nsx` | Verified |
-| Realtek ALC256 (any laptop) | `10ec0256` | any | borrowed `1D05E022_Speakers.nsx` | Experimental, untested |
+### Step 1: Check your audio hardware (before installing anything)
 
-Accepted speaker ports: `[Out] Speaker` (ALSA UCM) and `analog-output-speaker` (legacy PulseAudio profiles).
+This step only reads information. It does not change your system, and you do not need Nahimic installed yet.
 
-### Realtek ALC256 notes
+1. **Unplug** any headphones and disconnect Bluetooth audio.
+2. In your system sound settings, select the **built-in speakers** as the output.
+3. Run:
 
-- The ALC256 entry reuses the Senary laptop's speaker tuning. The effects (profiles, EQ, surround, stabilizer) should work, but the tuning was made for different speakers, so the sound may be too bright, too bassy, or quieter or louder than expected. Start with low bass gain.
-- For the best result, use the tuning file made for your own laptop. If your laptop shipped with Nahimic on Windows, look in `C:\Windows\System32\DriverStore\FileRepository\` for a `*ProductSettings.cab` or a `Devices\<SUBSYSTEM>_Speakers.nsx` file, extract it, and point a local device entry at it (see below).
-- Check your hardware first:
+   ```sh
+   pactl --format=json list sinks | python3 -c "import json,sys; [print(s['name'], '|', s['active_port'], '|', s['properties'].get('alsa.components')) for s in json.load(sys.stdin)]"
+   ```
 
-```sh
-pactl --format=json list sinks | python3 -c "import json,sys; [print(s['name'], s['active_port'], s['properties'].get('alsa.components')) for s in json.load(sys.stdin)]"
-```
+   If you get `pactl: command not found`, run `sudo pacman -S libpulse` and try again.
 
-You should see something like `HDA:10ec0256,<subsystem>,...` with the speaker port active.
+4. Look at the output. You should see a line similar to:
 
-### Adding or overriding a device locally
+   ```
+   alsa_output.pci-0000_00_1f.3.analog-stereo | analog-output-speaker | HDA:10ec0256,1028087c,00100002
+   ```
 
-Create `~/.config/nahimic-linux/devices.json`. Entries there are checked before the built-in table:
+   Check both of these on the same line:
 
-```json
-{
-  "devices": [
-    {
-      "name": "My laptop (ALC256, own tuning)",
-      "codec": "10ec0256",
-      "subsystem": "1028087c",
-      "device_file": "/home/me/nahimic/1028087C_Speakers.nsx",
-      "verified": false
-    }
-  ],
-  "speaker_ports": ["[Out] Speaker"]
-}
-```
+   | Check | What you need to see |
+   |---|---|
+   | Middle column (port) | `[Out] Speaker` or `analog-output-speaker` |
+   | Last column (hardware) | starts with `HDA:10ec0256,` (Realtek ALC256) or `HDA:14f11f87,1d05e022,` (MECHREVO Wujie 14X Pro) |
 
-`device_file` can be relative to the factory settings folder or an absolute path to your own file. The engine only imports tuning on first setup, so after changing it, reset the runtime (this also resets your effect settings):
+5. Decide:
+   - **Both checks match:** continue to Step 2.
+   - **Hardware matches but the port says headphones:** go back to items 1 and 2, then run the command again.
+   - **Hardware does not match:** stop here. Your chip is not supported yet. Open an issue and include the full output of the command.
 
-```sh
-systemctl --user stop nahimic.service
-rm -rf ~/.local/share/nahimic-linux/runtime ~/.local/share/nahimic-linux/installation.json
-nahimic --activate
-```
+Write down the middle value of the hardware ID (in the example above, `1028087c`). This is your laptop's **subsystem ID**. You may need it in Step 6.
 
-## Install
+### Step 2: Enable the multilib repository
 
-On Arch Linux and derivatives, build and install the package from this repository:
+Wine, which this project needs, is in Arch's `multilib` repository. Many systems have it enabled already.
+
+1. Open the pacman config:
+
+   ```sh
+   sudo nano /etc/pacman.conf
+   ```
+
+2. Find these two lines and remove the `#` from the start of both, if it is there:
+
+   ```
+   #[multilib]
+   #Include = /etc/pacman.d/mirrorlist
+   ```
+
+3. Save (`Ctrl+O`, `Enter`) and exit (`Ctrl+X`).
+4. Refresh and update your system:
+
+   ```sh
+   sudo pacman -Syu
+   ```
+
+### Step 3: Install the build tools
 
 ```sh
 sudo pacman -S --needed base-devel git
+```
+
+The remaining dependencies (Wine, PySide6, MinGW, and others) are installed automatically in Step 4.
+
+### Step 4: Download, build, and install
+
+Keep the **built-in speakers selected** during this step. The installer sets up the audio service at the end, and it looks for the speakers at that moment.
+
+```sh
+cd ~
 git clone https://github.com/KevinLKs/nahimic-linux.git
 cd nahimic-linux/packaging
 makepkg -si
 ```
 
-`makepkg` downloads the pinned Nahimic runtime components, verifies their SHA-256 hashes, builds the host, and installs everything. Open **Nahimic** from your application menu or run `nahimic`. Initial runtime setup may take a moment.
+- `makepkg` asks for your password and asks you to confirm the dependencies. Answer `Y`.
+- It downloads the Nahimic runtime files from Microsoft Update and the Nahimic support site, checks their SHA-256 hashes, builds the program, and installs it. This can take several minutes.
+- Do **not** run `makepkg` with `sudo`. It refuses to run as root.
 
-To update later, run `git pull` in the `nahimic-linux` folder, then `makepkg -si` again in `packaging`.
+If the end of the output says `Nahimic: open the application to see the setup error.`, the speakers were not detected. Go back to Step 1, fix the output selection, then continue to Step 5 anyway. Opening the app retries the setup.
 
-Requires x86_64 Linux, Wine, PipeWire, PipeWire Pulse, WirePlumber 0.5 or newer, and a systemd user session. The Qt interface works with KDE, GNOME, and other desktop environments that provide these components. Effects attach automatically to the built-in speakers while you select real output devices as usual. Headphones, Bluetooth devices, and HDMI outputs use their own audio paths. Effects resume automatically when the speakers return.
+### Step 5: Open the app and confirm it works
 
-## Usage and troubleshooting
+1. Open **Nahimic** from your application menu, or run `nahimic` in a terminal.
+2. Wait. The first launch prepares a Wine environment and can take a minute or two. The status line reads "Preparing effects. Please wait…" during this time.
+3. Play some audio (music or a video) through the speakers.
+4. In a terminal, run:
 
-The power control at the top switches between audio effects and original audio. Open **Equalizer** for the ten-band controls, or **Settings** to configure startup and interface language. Changes appear immediately while the app applies and confirms them in the background. If a write fails, the panel reads the current state and displays an error.
+   ```sh
+   nahimic --status
+   ```
 
-The app uses a custom title bar: drag it to move the window, double-click to maximize or restore, and drag the window edges to resize.
+   You should see `"ready": true`, `"enabled": true`, and `"active": true`. `active` only becomes true while audio is actually playing.
 
-Supported interface languages: English, Simplified Chinese, Traditional Chinese, Japanese, Korean, German, French, Spanish, Portuguese, Italian, Russian, and Turkish. The app follows the system language by default, with English used for unsupported locales. Translations are in [app/locales/](app/locales/); message keys are the English source strings.
+5. Toggle the power button at the top of the app. You should hear the difference between processed and original sound.
+6. Log out and back in (or reboot) and confirm the effects start again on their own.
+
+On a Realtek ALC256 laptop, the ALC256 support is **experimental**. It borrows the speaker tuning from a different laptop, so the sound may be brighter, bassier, or louder than expected. Start with a low bass setting. Step 6 explains how to use tuning made for your own laptop.
+
+### Step 6 (optional): Use your laptop's own speaker tuning
+
+Only do this if your laptop originally shipped with Nahimic on Windows and you can get its tuning file.
+
+1. On the Windows side (or a Windows backup), look in `C:\Windows\System32\DriverStore\FileRepository\` for a file named like `*ProductSettings.cab`, or for a `Devices\<SUBSYSTEM ID>_Speakers.nsx` file matching the subsystem ID from Step 1.
+2. If you found a `.cab` file, extract it on Linux with `cabextract` and find the `Devices/<SUBSYSTEM ID>_Speakers.nsx` file inside.
+3. Copy the `.nsx` file to your Linux home folder, for example `~/nahimic/1028087C_Speakers.nsx`.
+4. Create the file `~/.config/nahimic-linux/devices.json` with this content, replacing the subsystem ID and path with yours (use lowercase for `subsystem` and the full path, not `~`):
+
+   ```json
+   {
+     "devices": [
+       {
+         "name": "My laptop (ALC256, own tuning)",
+         "codec": "10ec0256",
+         "subsystem": "1028087c",
+         "device_file": "/home/YOURNAME/nahimic/1028087C_Speakers.nsx",
+         "verified": false
+       }
+     ]
+   }
+   ```
+
+5. Reset the effect engine so it loads the new tuning. This also resets your effect settings:
+
+   ```sh
+   systemctl --user stop nahimic.service
+   rm -rf ~/.local/share/nahimic-linux/runtime ~/.local/share/nahimic-linux/installation.json
+   nahimic --activate
+   ```
+
+6. Repeat Step 5 to confirm everything works.
+
+---
+
+## Updating
+
+```sh
+cd ~/nahimic-linux
+git pull
+cd packaging
+makepkg -si
+```
+
+## Uninstalling
+
+```sh
+sudo pacman -R nahimic-linux
+```
+
+This stops and disables the service. To also remove your settings and the Wine environment:
+
+```sh
+rm -rf ~/.local/share/nahimic-linux ~/.config/nahimic-linux
+```
+
+## Troubleshooting
+
+| Problem | What to do |
+|---|---|
+| "No supported built-in speakers were found" | Repeat Step 1. The speakers must be the selected output with nothing plugged in. |
+| Status stuck on "Preparing effects" | Wait two minutes, then check the log (below). |
+| "The audio service is not running" | Run `systemctl --user restart nahimic.service`, then reopen the app. |
+| Effects stop when headphones are plugged in | Expected. Effects only apply to the built-in speakers and resume when you unplug. |
+| `unverified hardware profile in use` in the log | Expected on Realtek ALC256. It is a reminder that the tuning is borrowed. |
+
+Useful commands:
 
 ```sh
 nahimic --status
@@ -98,23 +198,53 @@ systemctl --user status nahimic.service
 journalctl --user -u nahimic.service -b
 ```
 
-A warning line `unverified hardware profile in use` in the journal is expected on ALC256. Settings are stored in `${XDG_DATA_HOME:-~/.local/share}/nahimic-linux/`.
+Settings are stored in `~/.local/share/nahimic-linux/`.
 
-## Build and install from source
+## Using the app
 
-Build dependencies: MinGW-w64 GCC, a C compiler, pkg-config, libpulse, Python, and cabextract. Runtime dependencies: Wine, PySide6, PipeWire, PipeWire Pulse, WirePlumber 0.5+, libpulse, and systemd.
+The power control at the top switches between audio effects and original audio. Open **Equalizer** for the ten-band controls, or **Settings** to configure startup and interface language. Changes appear immediately while the app applies and confirms them in the background. If a write fails, the panel reads the current state and displays an error.
+
+The app uses a custom title bar: drag it to move the window, double-click to maximize or restore, and drag the window edges to resize.
+
+Interface languages: English, Simplified Chinese, Traditional Chinese, Japanese, Korean, German, French, Spanish, Portuguese, Italian, Russian, and Turkish. The app follows the system language, with English used for unsupported locales. You can change it in **Settings**.
+
+---
+
+## For developers
+
+### How it works
+
+The effects are produced by the original Windows Nahimic APO4 audio engine, running under Wine inside a dedicated prefix. PipeWire sends speaker audio to that engine as 48 kHz stereo float PCM and plays the processed result on the real speaker output. Because the engine only sees PCM, it does not depend on the audio chip. Two things are hardware specific:
+
+1. **Detection:** which PipeWire sink counts as "the built-in speakers".
+2. **Tuning:** the device settings file (`Devices/*_Speakers.nsx`) that the engine loads. The pinned download only contains the tuning for subsystem `1D05E022`.
+
+Both are defined in [host/devices.json](host/devices.json). Entries in `~/.config/nahimic-linux/devices.json` are checked first. `device_file` can be relative to the factory settings folder or an absolute path.
+
+### Supported hardware
+
+| Hardware | Codec | Subsystem | Tuning file | Status |
+|---|---|---|---|---|
+| MECHREVO Wujie 14X Pro (Senary) | `14f11f87` | `1d05e022` | factory `1D05E022_Speakers.nsx` | Verified |
+| Realtek ALC256 (any laptop) | `10ec0256` | any | borrowed `1D05E022_Speakers.nsx` | Experimental |
+
+Accepted speaker ports: `[Out] Speaker` (ALSA UCM) and `analog-output-speaker` (legacy profiles).
+
+### Building without installing
+
+Build dependencies: MinGW-w64 GCC, a C compiler, pkg-config, libpulse, Python, and cabextract.
 
 ```sh
-make                                   # native host components
-make DESTDIR=/tmp/nahimic-stage install  # inspect the layout
-python -m unittest discover -s tests   # tests (QT_QPA_PLATFORM=offscreen on headless machines)
+make                                      # native host components
+make DESTDIR=/tmp/nahimic-stage install   # inspect the install layout
+QT_QPA_PLATFORM=offscreen python -m unittest discover -s tests
 ```
 
-The runtime components (Nahimic engine and factory settings) are downloaded and SHA-256 verified by [packaging/PKGBUILD](packaging/PKGBUILD) and [packaging/extract_runtime.py](packaging/extract_runtime.py). For a full installation, use the steps in "Install" above.
+Runtime components are downloaded and verified by [packaging/PKGBUILD](packaging/PKGBUILD) and [packaging/extract_runtime.py](packaging/extract_runtime.py). Translations are in [app/locales/](app/locales/); message keys are the English source strings, and new text must be added to every locale file.
 
-## Contribute device support
+### Contributing device support
 
-Read [AGENTS.md](AGENTS.md) first. Include your laptop model, audio hardware IDs (`alsa.components`), PipeWire output information, and results from testing effect switching, settings persistence, service restarts, and continuous playback. Verify new device support on the actual machine before submitting a pull request.
+Read [AGENTS.md](AGENTS.md) first. Include your laptop model, audio hardware ID (`alsa.components`), PipeWire output information, and results from testing effect switching, settings persistence, service restarts, and continuous playback. Verify new device support on the actual machine before submitting a pull request.
 
 ## License and attribution
 
